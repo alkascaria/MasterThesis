@@ -1,5 +1,7 @@
 import React, { useRef } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
+import axios from 'axios';
+
 
 export default function App() {
   const editorRef = useRef(null);
@@ -10,38 +12,35 @@ export default function App() {
     }
   };
 
-  //To download the source code as HTML or txt filenp
-  const saveContentAsHTML = () => {
+  //To download the source code as HTML or txt file
+  const saveAsHTML = () => {
     if (editorRef.current) {
-      let content = editorRef.current.getContent();
+      let content = editorRef.current.getContent(); //Gets the current content of tinymce
       let blob = new Blob([content], { type: 'text/html' });
       let link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = 'content.html';
-      link.download = 'content.txt';
+      link.download = 'content.html'; //Saves as html file
+      //link.download = 'content.txt'; //Saves as txt file
       link.click();
     }
   };
 
-  const saveContentToDatabase = () => {
+
+  //To save content to DB, in here MongoDB
+  const saveToDB = async () => {
     if (editorRef.current) {
-      let content = editorRef.current.getContent();
-      
-      fetch('http://localhost:3000/api/saveContent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ content: content })
-      })
-      .then(response => response.json())
-      .then(data => console.log(data))
-      .catch((error) => {
-        console.error('Error:', error);
-      });
+      const content = editorRef.current.getContent();
+  
+      try {
+        const response = await axios.post('http://127.0.0.1:5000/api/saveContent', { content });
+        console.log(response.data);
+        alert('Content saved to the database!');
+      } catch (error) {
+        console.error(error);
+        alert('Error saving content to the database.');
+      }
     }
   };
-  
 
   return (
     <>
@@ -63,10 +62,11 @@ export default function App() {
             'removeformat | help | code',
           content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
         }}
+        
       />
       <button onClick={log}>Log editor content</button>
-      <button onClick={saveContentAsHTML}>Save as HTML</button>
-      <button onClick={saveContentToDatabase}>Save to DB</button>
+      <button onClick={saveAsHTML}>Save as HTML</button>
+      <button onClick={saveToDB}>Save to DB</button>
     </>
   );
 }
