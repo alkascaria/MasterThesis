@@ -54,17 +54,19 @@ export default function App() {
     }
   };
 
+  //To save the current content as HTML or TXT
   const saveAsHTML = () => {
     if (editorRef.current) {
       let content = editorRef.current.getContent();
       let blob = new Blob([content], { type: 'text/html' });
       let link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = 'content.html';
+      link.download = 'content.html'; //link.download = 'content.txt';
       link.click();
     }
   };
 
+  //Writing into DB
   const saveToDB = async () => {
     if (editorRef.current) {
       const content = editorRef.current.getContent();
@@ -121,6 +123,7 @@ export default function App() {
       <button onClick={saveAsHTML}>Save as HTML</button>
       <button onClick={saveToDB}>Save to DB</button>
 
+      {/* Displaying fetched images */}
       <h2>Fetched Images</h2>
       {fetchedImages.map(image => (
         <img key={image.id} src={image.symbol} alt={image.acronym} style={{ width: '100px' }} />
