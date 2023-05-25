@@ -1,10 +1,52 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
 import axios from 'axios';
 
-
 export default function App() {
   const editorRef = useRef(null);
+  const [fetchedImages, setFetchedImages] = useState([]);
+
+  // Creating a cutom plugin to fetch images from the database
+  useEffect(() => {
+
+    // since we are trying to add a custom plugin in the useEffect hook, it is important to ensure that tinymce is fully loaded 
+    // before attempting to call window.tinymce.PluginManager.add
+    // This code sets up an interval that checks every 100ms if window.tinymce is defined, and if it is, it clears the interval 
+    // and then adds the custom plugin. If the component unmounts, it also clears the interval to prevent memory leaks. 
+       
+    const timer = setInterval(() => {
+      if (window.tinymce) {
+        clearInterval(timer);
+        window.tinymce.PluginManager.add('customPlugin', function(editor) {
+          editor.ui.registry.addButton('customPlugin', {
+            text: 'Fetch Images',
+            onAction: async function() {
+              try {
+                const response = await axios.get('http://127.0.0.1:5000/api/images');
+                console.log(response.data);
+                alert('Images fetched from the database!');
+                setFetchedImages(response.data);
+                const images = response.data;
+                // Insert the first image from the fetched images into the editor's content
+                if (images.length > 0) {
+                  const firstImage = images[0];
+                  //The DB formant is (id,acronym,description,symbol), the below 2 line changes according to the format of the DB
+                  const imageUrl = firstImage.symbol; 
+                  const imageAlt = firstImage.acronym; 
+                  editor.insertContent(`<img src="${imageUrl}" alt="${imageAlt}">`);
+                }
+              } catch (error) {
+                console.error(error);
+                alert('Error fetching images from the database.');
+              }
+            }
+          });
+        });
+      }
+    }, 100);
+
+    return () => clearInterval(timer); // Clean up the interval on unmount
+  }, []);
 
   const log = () => {
     if (editorRef.current) {
@@ -12,25 +54,21 @@ export default function App() {
     }
   };
 
-  //To download the source code as HTML or txt file
   const saveAsHTML = () => {
     if (editorRef.current) {
-      let content = editorRef.current.getContent(); //Gets the current content of tinymce
+      let content = editorRef.current.getContent();
       let blob = new Blob([content], { type: 'text/html' });
       let link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = 'content.html'; //Saves as html file
-      //link.download = 'content.txt'; //Saves as txt file
+      link.download = 'content.html';
       link.click();
     }
   };
 
-
-  //To save content to DB, in here MongoDB
   const saveToDB = async () => {
     if (editorRef.current) {
       const content = editorRef.current.getContent();
-  
+
       try {
         const response = await axios.post('http://127.0.0.1:5000/api/saveContent', { content });
         console.log(response.data);
@@ -46,27 +84,47 @@ export default function App() {
     <>
       <Editor
         tinymceScriptSrc={process.env.PUBLIC_URL + '/tinymce/tinymce.min.js'}
-        onInit={(evt, editor) => editorRef.current = editor}
+        onInit={(evt, editor) => (editorRef.current = editor)}
         initialValue='<p>This is the initial content of the editor.</p>'
         init={{
           height: 500,
           menubar: false,
           plugins: [
-            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap',
-            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-            'insertdatetime', 'media', 'table', 'preview', 'help', 'wordcount'
+            'customPlugin',
+            'advlist',
+            'autolink',
+            'lists',
+            'link',
+            'image',
+            'charmap',
+            'anchor',
+            'searchreplace',
+            'visualblocks',
+            'code',
+            'fullscreen',
+            'insertdatetime',
+            'media',
+            'table',
+            'preview',
+            'help',
+            'wordcount'
           ],
-          toolbar: 'undo redo | blocks | ' +
+          toolbar:
+            'undo redo | blocks | image ' +
             'bold italic forecolor | alignleft aligncenter ' +
             'alignright alignjustify | bullist numlist outdent indent | ' +
-            'removeformat | help | code',
+            'removeformat | help | code | customPlugin',
           content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
         }}
-        
       />
       <button onClick={log}>Log editor content</button>
       <button onClick={saveAsHTML}>Save as HTML</button>
       <button onClick={saveToDB}>Save to DB</button>
+
+      <h2>Fetched Images</h2>
+      {fetchedImages.map(image => (
+        <img key={image.id} src={image.symbol} alt={image.acronym} style={{ width: '100px' }} />
+      ))}
     </>
   );
 }
