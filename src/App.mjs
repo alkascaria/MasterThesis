@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
+
 import axios from 'axios';
-import ImageDB from './plugin/ImageDB.js';
 import Modal from 'react-modal';
+
+import ImageDB from './plugin/ImageDB.js';
+import ContentDB from './plugin/ContentDB.js';
 
 export default function App() {
   const editorRef = useRef(null);
@@ -19,6 +22,7 @@ export default function App() {
       if (window.tinymce || checkCount > maxChecks){
         clearInterval(timer);
         window.tinymce.PluginManager.add('ImageDB', ImageDB);
+        window.tinymce.PluginManager.add('ContentDB', ContentDB);
       }
     }, 100);
 
@@ -38,7 +42,7 @@ export default function App() {
   };
 
   //For the pop-up window onclick SaveToDB button
-  const [doc_name, setName] = useState('');
+  const [doc_Name, setName] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   React.useEffect(() => {
     Modal.setAppElement('#root');
@@ -46,12 +50,15 @@ export default function App() {
 
   const customModalStyles = { //Modal Styles
     content: {
-      width: '300px', 
-      height: '200px', 
+      width: '300px',
+      height: '200px',
       margin: 'auto',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
     },
   };
-
+  
   const openModal = () => {
     setIsModalOpen(true);
   };
@@ -62,14 +69,19 @@ export default function App() {
 
   //Writing contents into DB
   const saveToDB = async () => {
+    if (!doc_Name.trim()) {
+      alert('Please enter a document name.');
+      return;
+    }
+
     if (editorRef.current) {
       const content = editorRef.current.getContent();
-      const currentDate = new Date().toISOString();
+      const currentDate = new Date().toDateString();
 
       // Send the name, current date, and content to the server for saving
       const data = {
-        id: doc_name+currentDate, // Assuming the name is the unique ID
-        name: doc_name,
+        id: doc_Name + currentDate, // Assuming the name is the unique ID
+        name: doc_Name,
         date: currentDate,
         content: content,
       };
@@ -101,7 +113,13 @@ export default function App() {
     <>
       <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={customModalStyles}>
         <h2>Enter Document Name</h2>
-        <input type="text" value={doc_name} onChange={(e) => setName(e.target.value)} placeholder="Document Name" />
+        <input 
+          type="text" 
+          value={doc_Name} 
+          onChange={(e) => setName(e.target.value)} 
+          placeholder="Document Name" 
+          required
+        />
         <button onClick={saveToDB}>Save</button>
       </Modal>
 
@@ -113,30 +131,22 @@ export default function App() {
           height: 500,
           menubar: false,
           plugins: [
-            'advlist',
-            'autolink',
-            'lists',
-            'link',
-            'image',
-            'charmap',
-            'anchor',
-            'searchreplace',
-            'visualblocks',
-            'code',
-            'fullscreen',
-            'insertdatetime',
-            'media',
-            'table',
-            'preview',
-            'help',
-            'wordcount',
-            'ImageDB'
+            'advlist',          'autolink',
+            'lists',            'link',
+            'image',            'charmap',
+            'anchor',           'searchreplace',
+            'visualblocks',     'code',
+            'fullscreen',       'insertdatetime',
+            'media',            'table',
+            'preview',          'help',
+            'wordcount',        'ImageDB',
+            'ContentDB'
           ],
           toolbar:
-            'undo redo | blocks | image | ImageMenuButton ' +
+            'undo redo | blocks | image | imageMenuButton ' +
             'bold italic forecolor | alignleft aligncenter ' +
             'alignright alignjustify | bullist numlist outdent indent | ' +
-            'removeformat | help | code ',
+            'removeformat | help | code | contentMenuButton',
           content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
         }}
       />
