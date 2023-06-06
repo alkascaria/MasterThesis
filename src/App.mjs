@@ -1,19 +1,15 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
 import axios from 'axios';
 import ImageDB from './plugin/ImageDB.js';
+import Modal from 'react-modal';
 
 export default function App() {
   const editorRef = useRef(null);
   
-  // Creating a cutom plugin to fetch images from the database and use a drop down menu
+  // Cutom drop down plugin to fetch symbols from DB 
   useEffect(() => {
 
-    // since we are trying to add a custom plugin in the useEffect hook, it is important to ensure that tinymce is fully loaded 
-    // before attempting to call 'window.tinymce.PluginManager.add'
-    // This code sets up an interval that checks every 100ms if window.tinymce is defined, and if it is, it clears the interval 
-    // and then adds the custom plugin. If the component unmounts, it also clears the interval to prevent memory leaks. 
-    
     let checkCount = 0;
     const maxChecks = 50; // Stop checking after 5 seconds
 
@@ -29,12 +25,6 @@ export default function App() {
     return () => clearInterval(timer); // Clean up the interval on unmount
   }, []); 
 
-  const log = () => {
-    if (editorRef.current) {
-      console.log(editorRef.current.getContent());
-    }
-  };
-
   //To save the current content as HTML or TXT
   const saveAsHTML = () => {
     if (editorRef.current) {
@@ -47,15 +37,53 @@ export default function App() {
     }
   };
 
-  //Writing into DB
+  //For the pop-up window onclick SaveToDB button
+  const [doc_name, setName] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  React.useEffect(() => {
+    Modal.setAppElement('#root');
+  }, []);
+
+  const customModalStyles = { //Modal Styles
+    content: {
+      width: '300px', 
+      height: '200px', 
+      margin: 'auto',
+    },
+  };
+
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  //Writing contents into DB
   const saveToDB = async () => {
     if (editorRef.current) {
       const content = editorRef.current.getContent();
+      const currentDate = new Date().toISOString();
+
+      // Send the name, current date, and content to the server for saving
+      const data = {
+        id: doc_name+currentDate, // Assuming the name is the unique ID
+        name: doc_name,
+        date: currentDate,
+        content: content,
+      };
 
       try {
-        const response = await axios.post('http://127.0.0.1:5000/api/saveContent', { content });
+        // Perform the API call to save the data to the database
+        const response = await axios.post('http://127.0.0.1:5000/api/saveContent', data);
         console.log(response.data);
         alert('Content saved to the database!');
+
+        // Close the modal and reset the name input field
+        closeModal();
+        setName('');
+
       } catch (error) {
         console.error(error);
         alert('Error saving content to the database.');
@@ -63,8 +91,20 @@ export default function App() {
     }
   };
 
+  const log = () => {
+    if (editorRef.current) {
+      console.log(editorRef.current.getContent());
+    }
+  };
+
   return (
     <>
+      <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={customModalStyles}>
+        <h2>Enter Document Name</h2>
+        <input type="text" value={doc_name} onChange={(e) => setName(e.target.value)} placeholder="Document Name" />
+        <button onClick={saveToDB}>Save</button>
+      </Modal>
+
       <Editor
         tinymceScriptSrc='./tinymce/tinymce.min.js'
         onInit={(evt, editor) => (editorRef.current = editor)}
@@ -102,7 +142,7 @@ export default function App() {
       />
       <button onClick={log}>Log editor content</button>
       <button onClick={saveAsHTML}>Save as HTML</button>
-      <button onClick={saveToDB}>Save to DB</button>
+      <button onClick={openModal}>Save to DB</button>
     </>
   );
 }
