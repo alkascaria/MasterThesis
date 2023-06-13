@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
-import axios from 'axios';
 import Modal from 'react-modal';
+
+import { saveAsHTML } from './plugin/SaveAsHtml'; 
+import { customModalStyles, saveToDB } from './plugin/ContentToDB';
 import ImageDB from './plugin/ImageDB';
-import ContentDB from './plugin/ContentDB';
+import ContentDB from './plugin/ContentFromDB';
 
 export default function App() {
   const editorRef = useRef(null);
@@ -20,71 +22,12 @@ export default function App() {
     }
   };
 
-  //To save the current content as HTML or TXT
-  const saveAsHTML = () => {
-    if (editorRef.current) {
-      let content = editorRef.current.getContent();
-      let blob = new Blob([content], { type: 'text/html' });
-      let link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'content.html'; //link.download = 'content.txt';
-      link.click();
-    }
-  };
-
-  //For the pop-up window onclick SaveToDB button
-  const customModalStyles = { //Modal Styles
-    content: {
-      width: '300px',
-      height: '200px',
-      margin: 'auto',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-    },
-  };
-
   const openModal = () => {
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
-  };
-
-  //Writing contents into DB
-  const saveToDB = async () => {
-    if (!doc_Name.trim()) {
-      alert('Please enter a document name.');
-      return;
-    }
-
-    if (editorRef.current) {
-      const content = editorRef.current.getContent();
-      const currentDate = new Date().toDateString();
-
-       // Send the name, current date, and content to the server for saving
-      const data = {
-        id: doc_Name + currentDate, // Assuming the name is the unique ID
-        name: doc_Name,
-        date: currentDate,
-        content: content,
-      };
-
-      try {
-        // Perform the API call to save the data to the database
-        const response = await axios.post('http://127.0.0.1:5000/api/saveContent', data);
-        console.log(response.data);
-        alert('Content saved to the database!');
-
-        // Close the modal and reset the name input field
-        closeModal();
-        setName('');
-      } catch (error) {
-        console.error(error);
-        alert('Error saving content to the database.');
-      }
-    }
   };
 
   // Adding custom plugin
@@ -130,7 +73,7 @@ export default function App() {
           placeholder="Document Name"
           required
         />
-        <button onClick={saveToDB}>Save</button>
+        <button onClick={() => saveToDB(doc_Name, editorRef, setIsModalOpen, setName)}>Save</button>
       </Modal>
 
       <Editor
@@ -138,7 +81,7 @@ export default function App() {
         onInit={(evt, editor) => editorRef.current = editor}
         initialValue='<p>This is the initial content of the editor.</p>'
         init={{
-          height: 500,
+          height: 700,
           menubar: false,
           plugins: [
             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap',
@@ -156,7 +99,7 @@ export default function App() {
         }}
 />
       <button onClick={log}>Log editor content</button>
-      <button onClick={saveAsHTML}>Save as HTML</button>
+      <button onClick={saveAsHTML(editorRef)}>Save as HTML</button>
       <button onClick={openModal}>Save to DB</button>
     </>
   );
