@@ -1,33 +1,24 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
-
 import axios from 'axios';
 import Modal from 'react-modal';
-
-import ImageDB from './plugin/ImageDB.js';
-import ContentDB from './plugin/ContentDB.js';
+import ImageDB from './plugin/ImageDB';
+import ContentDB from './plugin/ContentDB';
 
 export default function App() {
   const editorRef = useRef(null);
-  
-  // Cutom drop down plugin to fetch symbols from DB 
+  const [doc_Name, setName] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   useEffect(() => {
+    Modal.setAppElement('#root');
+  }, []);
 
-    let checkCount = 0;
-    const maxChecks = 50; // Stop checking after 5 seconds
-
-    const timer = setInterval(() => {
-      checkCount++;
-
-      if (window.tinymce || checkCount > maxChecks){
-        clearInterval(timer);
-        window.tinymce.PluginManager.add('ImageDB', ImageDB);
-        window.tinymce.PluginManager.add('ContentDB', ContentDB);
-      }
-    }, 100);
-
-    return () => clearInterval(timer); // Clean up the interval on unmount
-  }, []); 
+  const log = () => {
+    if (editorRef.current) {
+      console.log(editorRef.current.getContent());
+    }
+  };
 
   //To save the current content as HTML or TXT
   const saveAsHTML = () => {
@@ -42,12 +33,6 @@ export default function App() {
   };
 
   //For the pop-up window onclick SaveToDB button
-  const [doc_Name, setName] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  React.useEffect(() => {
-    Modal.setAppElement('#root');
-  }, []);
-
   const customModalStyles = { //Modal Styles
     content: {
       width: '300px',
@@ -58,7 +43,7 @@ export default function App() {
       transform: 'translate(-50%, -50%)',
     },
   };
-  
+
   const openModal = () => {
     setIsModalOpen(true);
   };
@@ -78,7 +63,7 @@ export default function App() {
       const content = editorRef.current.getContent();
       const currentDate = new Date().toDateString();
 
-      // Send the name, current date, and content to the server for saving
+       // Send the name, current date, and content to the server for saving
       const data = {
         id: doc_Name + currentDate, // Assuming the name is the unique ID
         name: doc_Name,
@@ -95,7 +80,6 @@ export default function App() {
         // Close the modal and reset the name input field
         closeModal();
         setName('');
-
       } catch (error) {
         console.error(error);
         alert('Error saving content to the database.');
@@ -103,9 +87,35 @@ export default function App() {
     }
   };
 
-  const log = () => {
-    if (editorRef.current) {
-      console.log(editorRef.current.getContent());
+  // Adding custom plugin
+  useEffect(() => {
+    let checkCount = 0;
+    const maxChecks = 50; // Stop checking after 5 seconds
+
+    const timer = setInterval(() => {
+      checkCount++;
+
+      if (window.tinymce || checkCount > maxChecks) {
+        clearInterval(timer);
+        if (!window.tinymce.PluginManager.get('ImageDB')) {
+          window.tinymce.PluginManager.add('ImageDB', ImageDB);
+        }
+        if (!window.tinymce.PluginManager.get('ContentDB')) {
+          window.tinymce.PluginManager.add('ContentDB', ContentDB);
+        }
+      }
+    }, 100);
+
+    return () => clearInterval(timer); // Clean up the interval on unmount
+  }, []);
+
+  // Define the custom plugin initialization within the setup function
+  const setup = (editor) => {
+    if (!window.tinymce.PluginManager.get('ImageDB')) {
+      window.tinymce.PluginManager.add('ImageDB', ImageDB);
+    }
+    if (!window.tinymce.PluginManager.get('ContentDB')) {
+      window.tinymce.PluginManager.add('ContentDB', ContentDB);
     }
   };
 
@@ -113,43 +123,38 @@ export default function App() {
     <>
       <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={customModalStyles}>
         <h2>Enter Document Name</h2>
-        <input 
-          type="text" 
-          value={doc_Name} 
-          onChange={(e) => setName(e.target.value)} 
-          placeholder="Document Name" 
+        <input
+          type="text"
+          value={doc_Name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Document Name"
           required
         />
         <button onClick={saveToDB}>Save</button>
       </Modal>
 
       <Editor
-        tinymceScriptSrc='./tinymce/tinymce.min.js'
-        onInit={(evt, editor) => (editorRef.current = editor)}
+        tinymceScriptSrc={process.env.PUBLIC_URL + '/tinymce/tinymce.min.js'}
+        onInit={(evt, editor) => editorRef.current = editor}
         initialValue='<p>This is the initial content of the editor.</p>'
         init={{
           height: 500,
           menubar: false,
           plugins: [
-            'advlist',          'autolink',
-            'lists',            'link',
-            'image',            'charmap',
-            'anchor',           'searchreplace',
-            'visualblocks',     'code',
-            'fullscreen',       'insertdatetime',
-            'media',            'table',
-            'preview',          'help',
-            'wordcount',        'ImageDB',
-            'ContentDB'
+            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap',
+            'anchor', 'searchreplace', 'visualblocks', 'code',
+            'fullscreen', 'insertdatetime', 'media', 'table',
+            'preview', 'help', 'wordcount', 'ImageDB', 'ContentDB'
           ],
           toolbar:
             'undo redo | blocks | image | imageMenuButton ' +
             'bold italic forecolor | alignleft aligncenter ' +
             'alignright alignjustify | bullist numlist outdent indent | ' +
             'removeformat | help | code | contentMenuButton',
-          content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+          content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+          setup: setup, // Pass the setup function to the TinyMCE init config
         }}
-      />
+/>
       <button onClick={log}>Log editor content</button>
       <button onClick={saveAsHTML}>Save as HTML</button>
       <button onClick={openModal}>Save to DB</button>
