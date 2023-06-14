@@ -5,21 +5,16 @@ import { Editor } from '@tinymce/tinymce-react';
 import Modal from 'react-modal';
 
 import { SaveFile } from './plugin/SaveFile.js';
-import { customModalStyles, saveToDB } from './plugin/ContentToDB';
-import ImageDB from './plugin/ImageDB';
-import ContentDB from './plugin/ContentFromDB';
+import { customModalStyles, saveToDB } from './plugin/ContentToDB'; // Button to save Content to DB
+import ImageDB from './plugin/ImageDB'; // Plugin for displaying for Symbol
+import ContentDB from './plugin/ContentFromDB'; // Plugin for displaying HTML file
 
 export default function App() {
-  
   const editorRef = useRef(null);
 
-  const [doc_Name, setName] = useState('');
+  const [docName, setName] = useState(''); // User entered document name
   const [selectedOption, setSelectedOption] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    Modal.setAppElement('#root');
-  }, []);
 
   const log = () => {
     if (editorRef.current) {
@@ -27,41 +22,16 @@ export default function App() {
     }
   };
 
+  // For Modal window
   const openModal = () => {
     setIsModalOpen(true);
   };
-
   const closeModal = () => {
     setIsModalOpen(false);
   };
-
-  // Adding custom plugin
-  useEffect(() => {
-    let checkCount = 0;
-    const maxChecks = 50; // Stop checking after 5 seconds
-
-    const timer = setInterval(() => {
-      checkCount++;
-
-      if (window.tinymce || checkCount > maxChecks) {
-
-        clearInterval(timer);
-
-        if (!window.tinymce.PluginManager.get('ImageDB')) {
-          window.tinymce.PluginManager.add('ImageDB', ImageDB);
-        }
-        if (!window.tinymce.PluginManager.get('ContentDB')) {
-          window.tinymce.PluginManager.add('ContentDB', ContentDB);
-        }
-      }
-    }, 100);
-
-    return () => clearInterval(timer); // Clean up the interval on unmount
-  }, []);
-
-  // Define the custom plugin initialization within the setup function
-  const setup = (editor) => {
-
+  
+  // Add plugins to TinyMCE
+  const addPlugins = () => {
     if (!window.tinymce.PluginManager.get('ImageDB')) {
       window.tinymce.PluginManager.add('ImageDB', ImageDB);
     }
@@ -69,6 +39,33 @@ export default function App() {
       window.tinymce.PluginManager.add('ContentDB', ContentDB);
     }
   };
+
+  useEffect(() => {
+
+    let checkCount = 0;
+    const maxChecks = 50; // Stop checking after 5 seconds
+    // Set an interval to periodically check for the existence of TinyMCE
+    const timer = setInterval(() => {
+      checkCount++;
+
+      // If TinyMCE exists or the maximum number of checks has been reached, stop the interval
+      if (window.tinymce || checkCount > maxChecks) {
+        clearInterval(timer);
+        addPlugins(); // Add the custom plugins to TinyMCE
+      }
+    }, 100);
+
+    return () => clearInterval(timer); // Clean up the interval when the component unmounts
+  }, []);
+
+  // Define the custom plugin initialization within the setup function
+  const setup = (editor) => {
+    addPlugins();
+  };
+
+  useEffect(() => {
+    Modal.setAppElement('#root');
+  }, []);
 
   return (
     <>
@@ -88,9 +85,9 @@ export default function App() {
             ],
             toolbar:
               'undo redo | blocks | image | imageMenuButton ' +
-              'bold italic forecolor | alignleft aligncenter ' +
-              'alignright alignjustify | bullist numlist outdent indent | ' +
-              'removeformat | help | code | contentMenuButton',
+              'bold italic forecolor table | alignleft aligncenter ' +
+              'alignright alignjustify | bullist numlist outdent indent ' +
+              ' contentMenuButton | help | code ',
             content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
             setup: setup, // Pass the setup function to the TinyMCE init config
           }
@@ -109,12 +106,13 @@ export default function App() {
           <input
             className='margin-top'
             type="text"
-            value={doc_Name}
+            value={docName}
             onChange={(e) => setName(e.target.value)}
             placeholder="Document Name"
             required
           />
-          <button onClick={() => saveToDB(selectedOption, doc_Name, editorRef, setIsModalOpen, setSelectedOption, setName)}>Save</button>
+
+          <button onClick={() => saveToDB(selectedOption, docName, editorRef, setIsModalOpen, setSelectedOption, setName)}>Save</button>
         </div>
       </Modal>
 
