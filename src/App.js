@@ -12,25 +12,30 @@ import ContentDB from './plugin/ContentFromDB'; // Plugin for displaying HTML fi
 export default function App() {
   const editorRef = useRef(null);
 
-  const [docName, setName] = useState(''); // User entered document name
-  const [selectedOption, setSelectedOption] = useState("");
+  // State variables initialization
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [docName, setName] = useState(''); // Document name - new
+  const [newGroupId, setNewGroupId] = useState(''); // Expriment Group - new
+  const [selectedOption, setSelectedOption] = useState(""); // Expriment Group - existing
+  const [groups, setGroups] = useState([]); // Expriment groups in DB
+  const [warningMessage, setWarningMessage] = useState("");
 
+  // Function to log the current content of the editor
   const log = () => {
     if (editorRef.current) {
       console.log(editorRef.current.getContent());
     }
   };
 
-  // For Modal window
+  // Functions to open and close the modal window
   const openModal = () => {
     setIsModalOpen(true);
   };
   const closeModal = () => {
     setIsModalOpen(false);
   };
-  
-  // Add plugins to TinyMCE
+
+  // Function to add the custom plugins to TinyMCE
   const addPlugins = () => {
     if (!window.tinymce.PluginManager.get('ImageDB')) {
       window.tinymce.PluginManager.add('ImageDB', ImageDB);
@@ -40,6 +45,12 @@ export default function App() {
     }
   };
 
+  // Define the custom plugin initialization within the setup function
+  const setup = (editor) => {
+    addPlugins();
+  };
+
+  // Effect to check for the existence of TinyMCE and add the custom plugins
   useEffect(() => {
 
     let checkCount = 0;
@@ -58,14 +69,18 @@ export default function App() {
     return () => clearInterval(timer); // Clean up the interval when the component unmounts
   }, []);
 
-  // Define the custom plugin initialization within the setup function
-  const setup = (editor) => {
-    addPlugins();
-  };
-
+  // Effect to set the root element for the modal
   useEffect(() => {
     Modal.setAppElement('#root');
   }, []);
+
+  // Effect to fetch the group data from the API
+  useEffect( () => {
+    fetch('http://localhost:5000/api/groups') 
+      .then(response => response.json())
+      .then(data => setGroups(data))
+      .catch(error => console.error('Error:', error));
+  }, [newGroupId]);
 
   return (
     <>
@@ -96,23 +111,53 @@ export default function App() {
 
       <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={customModalStyles}>
         <h2>Enter Experiment and Document Name</h2>
+
         <div className="modal-content">
           <select value={selectedOption} onChange={(e) => setSelectedOption(e.target.value)}>
             <option value="">Select an experiment group</option>
-            <option value="SäureBase1">SäureBase1</option> 
-            <option value="SäureBase2">SäureBase2</option>
+            {groups.map(group => (
+              <option key={group._id} value={group.name}>{group.name}</option>
+            ))}
           </select>
-              
+      
+          <input
+            className='margin-top'
+            type="text"
+            value={newGroupId}
+            onChange={(e) => {
+              let groupId = e.target.value;
+              setNewGroupId(groupId);
+              let exists = groups.some(group => group.name === groupId);
+              if(exists) {
+                setWarningMessage("Group ID already exists. Please enter a new one.");
+              } else {
+                setWarningMessage("");
+              }
+            }}
+            placeholder="Enter new group ID"
+          />
+          
           <input
             className='margin-top'
             type="text"
             value={docName}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Document Name"
+            placeholder="Enter document Name"
             required
           />
 
-          <button onClick={() => saveToDB(selectedOption, docName, editorRef, setIsModalOpen, setSelectedOption, setName)}>Save</button>
+          <button onClick={() => {
+            if(selectedOption || newGroupId) {
+              let groupToSave = selectedOption ? selectedOption : newGroupId;
+              let setGroupFunction = selectedOption ? setSelectedOption : setNewGroupId;
+              saveToDB(groupToSave, docName, editorRef, setIsModalOpen, setGroupFunction, setName);
+              setWarningMessage("");
+            } else {
+              setWarningMessage("Please either select an existing group or enter a new group ID");
+            }
+          }}>Save</button>
+
+          {warningMessage && <div className="warning">{warningMessage}</div>}
         </div>
       </Modal>
 
