@@ -1,13 +1,11 @@
-import './App.css';
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
 import Modal from 'react-modal';
 
 import { SaveFile } from './plugin/SaveFile.js';
-import { customModalStyles, saveToDB } from './plugin/ContentToDB'; // Button to save Content to DB
-import ImageDB from './plugin/ImageDB'; // Plugin for displaying for Symbol
-import ContentDB from './plugin/ContentFromDB'; // Plugin for displaying HTML file
+import { addPlugins } from './files/PluginManger';
+import { ExperimentGroups } from './files/ExperimentGroup';
+import EditorModal from './files/EditorModal';
 
 export default function App() {
   const editorRef = useRef(null);
@@ -15,10 +13,9 @@ export default function App() {
   // State variables initialization
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [docName, setName] = useState(''); // Document name - new
-  const [newGroupId, setNewGroupId] = useState(''); // Expriment Group - new
   const [selectedOption, setSelectedOption] = useState(""); // Expriment Group - existing
-  const [groups, setGroups] = useState([]); // Expriment groups in DB
   const [warningMessage, setWarningMessage] = useState("");
+  const [groups, newGroupId, setNewGroupId] = ExperimentGroups('');
 
   // Function to log the current content of the editor
   const log = () => {
@@ -33,16 +30,6 @@ export default function App() {
   };
   const closeModal = () => {
     setIsModalOpen(false);
-  };
-
-  // Function to add the custom plugins to TinyMCE
-  const addPlugins = () => {
-    if (!window.tinymce.PluginManager.get('ImageDB')) {
-      window.tinymce.PluginManager.add('ImageDB', ImageDB);
-    }
-    if (!window.tinymce.PluginManager.get('ContentDB')) {
-      window.tinymce.PluginManager.add('ContentDB', ContentDB);
-    }
   };
 
   // Define the custom plugin initialization within the setup function
@@ -74,14 +61,6 @@ export default function App() {
     Modal.setAppElement('#root');
   }, []);
 
-  // Effect to fetch the group data from the API
-  useEffect( () => {
-    fetch('http://localhost:5000/api/groups') 
-      .then(response => response.json())
-      .then(data => setGroups(data))
-      .catch(error => console.error('Error:', error));
-  }, [newGroupId]);
-
   return (
     <>
       <Editor
@@ -109,57 +88,20 @@ export default function App() {
         }
       />
 
-      <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={customModalStyles}>
-        <h2>Enter Experiment and Document Name</h2>
-
-        <div className="modal-content">
-          <select value={selectedOption} onChange={(e) => setSelectedOption(e.target.value)}>
-            <option value="">Select an experiment group</option>
-            {groups.map(group => (
-              <option key={group._id} value={group.name}>{group.name}</option>
-            ))}
-          </select>
-      
-          <input
-            className='margin-top'
-            type="text"
-            value={newGroupId}
-            onChange={(e) => {
-              let groupId = e.target.value;
-              setNewGroupId(groupId);
-              let exists = groups.some(group => group.name === groupId);
-              if(exists) {
-                setWarningMessage("Group ID already exists. Please enter a new one.");
-              } else {
-                setWarningMessage("");
-              }
-            }}
-            placeholder="Enter new group ID"
-          />
-          
-          <input
-            className='margin-top'
-            type="text"
-            value={docName}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter document Name"
-            required
-          />
-
-          <button onClick={() => {
-            if(selectedOption || newGroupId) {
-              let groupToSave = selectedOption ? selectedOption : newGroupId;
-              let setGroupFunction = selectedOption ? setSelectedOption : setNewGroupId;
-              saveToDB(groupToSave, docName, editorRef, setIsModalOpen, setGroupFunction, setName);
-              setWarningMessage("");
-            } else {
-              setWarningMessage("Please either select an existing group or enter a new group ID");
-            }
-          }}>Save</button>
-
-          {warningMessage && <div className="warning">{warningMessage}</div>}
-        </div>
-      </Modal>
+      <EditorModal
+        isModalOpen={isModalOpen}
+        closeModal={closeModal}
+        groups={groups}
+        selectedOption={selectedOption}
+        setSelectedOption={setSelectedOption}
+        newGroupId={newGroupId}
+        setNewGroupId={setNewGroupId}
+        docName={docName}
+        setName={setName}
+        warningMessage={warningMessage}
+        setWarningMessage={setWarningMessage}
+        editorRef={editorRef}
+      />
 
       <button onClick={log}>Log editor content</button>
       <button onClick={() => SaveFile(editorRef)}>Save File</button>

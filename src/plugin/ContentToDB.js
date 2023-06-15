@@ -1,22 +1,10 @@
 import axios from 'axios';
 
-// For the pop-up window onclick SaveToDB button - Modal Styles
-export const customModalStyles = { 
-  content: {
-    width: '300px',
-    height: '200px',
-    margin: 'auto',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-  },
-};
+const API_BASE_URL = "http://127.0.0.1:5000/api";
 
 // Writing contents into DB
-export const saveToDB = async (groupToSave, docName, editorRef, setIsModalOpen, etGroupFunction, setName) => {
+export const saveToDB = async (groupToSave, docName, editorRef, setIsModalOpen, setGroupFunction, setName) => {
 
-  const API_BASE_URL = "http://127.0.0.1:5000/api";
-  console.log(groupToSave);
   // Check if the document name field is empty or only contains whitespace
   if (!docName.trim()) { 
     alert('Please enter a document name.');
@@ -36,14 +24,13 @@ export const saveToDB = async (groupToSave, docName, editorRef, setIsModalOpen, 
     };
 
     try {
-      console.log(groupToSave);
 
       // Fetch all groups from the database
       const groupResponse = await axios.get(`${API_BASE_URL}/groups`);
       const groups = groupResponse.data;
 
       // Check if the group exists
-      const groupExists = groups.some(group => group._id === groupToSave);
+      const groupExists = groups.some(group => group.name === groupToSave);
 
       if(groupExists)
       {
@@ -74,7 +61,7 @@ export const saveToDB = async (groupToSave, docName, editorRef, setIsModalOpen, 
       // Close the modal and reset the name input field
       setIsModalOpen(false);
       setName('');
-      etGroupFunction("");
+      setGroupFunction("");
       
     } catch (error) {
       console.error(error);
