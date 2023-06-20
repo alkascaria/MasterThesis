@@ -1,5 +1,3 @@
-// DocumentModal.js
-
 import React from 'react';
 import Modal from 'react-modal';
 import { saveToDB } from '../plugin/ContentToDB'; // Button to save Content to DB
@@ -55,15 +53,15 @@ export default function EditorModal({
 
       <div style={centeredContentStyles} className="modal-content">
         <select style={inputStyles} value={selectedOption} onChange={(e) => setSelectedOption(e.target.value)}>
-            <option value="">Select an experiment group</option>
-            {groups.map(group => (
+          <option value="">Select an experiment group</option>
+          {groups.map(group => (
               <option key={group._id} value={group.name}>{group.name}</option>
-            ))}
-          </select>
+          ))}
+        </select>
         
-          <div style={inputStyles}>
-        <label htmlFor="newGroupId" style={{marginRight: '10px'}}>Enter new experiment group:</label>
-        <input
+        <div style={inputStyles}>
+          <label htmlFor="newGroupId" style={{marginRight: '10px'}}>Enter new experiment group:</label>
+          <input
             id="newGroupId"
             type="text"
             value={newGroupId}
@@ -78,22 +76,20 @@ export default function EditorModal({
               }
             }}
             placeholder="Enter new group ID"
-        />
-    </div>
+          />
+        </div>
           
-          
-          <div style={inputStyles}>
+        <div style={inputStyles}>
           <label htmlFor="docName" style={{marginRight: '10px'}}>Enter the document name:</label>
-        
-            <input
+          <input
             id='docName'
             type="text"
             value={docName}
             onChange={(e) => setName(e.target.value)}
             placeholder="Enter document Name"
-          /></div>
-          
-
+          />
+        </div>
+        
         <button onClick={() => {
             if(selectedOption && newGroupId) {
               setWarningMessage("Please select ONE, either an existing group or enter a new group");

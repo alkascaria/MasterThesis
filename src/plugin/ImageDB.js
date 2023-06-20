@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+const IMAGE_API_URL ='http://127.0.0.1:5000/api/images';
+
 export function ImageDB(editor) {
   
   editor.ui.registry.addMenuButton('imageMenuButton', {
@@ -9,7 +11,7 @@ export function ImageDB(editor) {
         // Calling `editor.ui.registry.updateMenuItem` function to dynamically update the menu items with the fetched images
         // The DB formant is (id,acronym,description,symbol), the below 2 line changes according to the format of the DB
 
-        const response = await axios.get('http://127.0.0.1:5000/api/images'); //Fetching images from the database
+        const response = await axios.get(IMAGE_API_URL); //Fetching images from the database
         const images = response.data;
         
         const items = images.map((image, index) => ({
@@ -20,9 +22,12 @@ export function ImageDB(editor) {
           }
         }));
         callback(items);
-
       } catch (error) {
         console.error(error);
+        editor.notificationManager.open({
+          text: 'Failed to load images. Please try again later.',
+          type: 'error'
+        });
       }
     }
   });

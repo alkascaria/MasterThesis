@@ -6,16 +6,18 @@ import { SaveFile } from './plugin/SaveFile.js';
 import { addPlugins } from './files/PluginManger';
 import { ExperimentGroups } from './files/ExperimentGroup';
 import EditorModal from './files/EditorModal';
+import DeleteModal from './files/DeleteModal.js';
 
 export default function App() {
   const editorRef = useRef(null);
 
   // State variables initialization
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [docName, setName] = useState(''); // Document name - new
+  const [selectedDoc, setSelectedDoc] = useState("");
   const [selectedOption, setSelectedOption] = useState(""); // Expriment Group - existing
   const [warningMessage, setWarningMessage] = useState("");
   const [groups, newGroupId, setNewGroupId] = ExperimentGroups('');
+  const [selectedGroup, setSelectedGroup] = useState("");
 
   // Function to log the current content of the editor
   const log = () => {
@@ -25,12 +27,15 @@ export default function App() {
   };
 
   // Functions to open and close the modal window
-  const openModal = () => {
-    setIsModalOpen(true);
-  };
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
+  const [isEditorModalOpen, setIsEditorModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const openEditorModal = () => setIsEditorModalOpen(true);
+  const closeEditorModal = () => setIsEditorModalOpen(false);
+
+  const openDeleteModal = () => setIsDeleteModalOpen(true);
+  const closeDeleteModal = () => setIsDeleteModalOpen(false);
+
 
   // Define the custom plugin initialization within the setup function
   const setup = (editor) => {
@@ -72,10 +77,11 @@ export default function App() {
             height: 700,
             menubar: false,
             plugins: [
-              'advlist', 'autolink', 'lists', 'link', 'image', 'charmap',
-              'anchor', 'searchreplace', 'visualblocks', 'code',
-              'fullscreen', 'insertdatetime', 'media', 'table',
-              'preview', 'help', 'wordcount', 'ImageDB', 'ContentDB'
+              'advlist',          'autolink',           'lists',            'link',             
+              'image',            'charmap',            'anchor',           'searchreplace',      
+              'visualblocks',     'code',               'fullscreen',       'insertdatetime', 
+              'media',            'table',              'preview',          'help', 
+              'wordcount',        'ImageDB',            'ContentDB'
             ],
             toolbar:
               'undo redo | blocks | image | imageMenuButton ' +
@@ -89,8 +95,8 @@ export default function App() {
       />
 
       <EditorModal
-        isModalOpen={isModalOpen}
-        closeModal={closeModal}
+        isModalOpen={isEditorModalOpen}
+        closeModal={closeEditorModal}
         groups={groups}
         selectedOption={selectedOption}
         setSelectedOption={setSelectedOption}
@@ -103,9 +109,20 @@ export default function App() {
         editorRef={editorRef}
       />
 
+      <DeleteModal 
+        isModalOpen = {isDeleteModalOpen}
+        closeModal = {closeDeleteModal}
+        groups = {groups}
+        selectedGroup = {selectedGroup}
+        setSelectedGroup ={setSelectedGroup}
+        selectedDoc = {selectedDoc}
+        setSelectedDoc = {setSelectedDoc}
+      />
+
       <button onClick={log}>Log editor content</button>
       <button onClick={() => SaveFile(editorRef)}>Save File</button>
-      <button onClick={openModal}>Save to DB</button> 
+      <button onClick={openEditorModal}>Save to DB</button>
+      <button onClick={openDeleteModal}>Delete from DB</button>
     </>
   );
 }
