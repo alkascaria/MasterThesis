@@ -3,14 +3,10 @@ import Modal from 'react-modal';
 import axios from 'axios';
 import Select from 'react-select';
 
+const API_BASE_URL = "http://127.0.0.1:5000/api";
+
 const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
   const [chemicalName, setChemicalName] = useState('');
-  const [ghs, setGhs] = useState([]);
-  const [hSatz, setHSatz] = useState('');
-  const [pSatz, setPSatz] = useState('');
-  const [euhSatz, setEuhSatz] = useState('');
-
-
   const [ghsList, setGhsList] = useState([]);
   const [hSatzList, setHSatzList] = useState([]);
   const [pSatzList, setPSatzList] = useState([]);
@@ -25,56 +21,49 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
 
   const handleGhsChange = (selectedGhsOptions) => {
     setSelectedGhsOptions(selectedGhsOptions);
-    const selectedValues = selectedGhsOptions;
-    setGhs(selectedValues);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
-      newCellContents[selectedCell.row][selectedCell.col] = selectedValues.map(Option => ({ src: Option.symbol }));
+      newCellContents[selectedCell.row][selectedCell.col] = selectedGhsOptions.map(Option => ({ src: Option.symbol }));
       setCellContents(newCellContents);
     }
   };
   
   const handleHSatzChange = (selectedHSatzOptions) => {
     setSelectedHSatzOptions(selectedHSatzOptions);
-    const selectedValues = selectedHSatzOptions;
-    setHSatz(selectedValues);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
-      const selectedDescriptions = selectedValues.map(option => option.value + ': ' + option.description);
-      newCellContents[selectedCell.row][selectedCell.col] = selectedDescriptions.join(', ');
+      const selectedDescriptions = selectedHSatzOptions.map(option => option.value + ': ' + option.description);
+      newCellContents[selectedCell.row][selectedCell.col] = selectedDescriptions.join('<br />');
       setCellContents(newCellContents);
     }
   };
 
   const handlePSatzChange = (selectedPSatzOptions) => {
     setSelectedPSatzOptions(selectedPSatzOptions);
-    const selectedValues = selectedPSatzOptions;
-    setPSatz(selectedValues);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
-      const selectedDescriptions = selectedValues.map(option => option.value + ': ' + option.description);
-      newCellContents[selectedCell.row][selectedCell.col] = selectedDescriptions.join(', ');
+      const selectedDescriptions = selectedPSatzOptions.map(option => option.value + ': ' + option.description);
+      newCellContents[selectedCell.row][selectedCell.col] = selectedDescriptions.join('<br />');
       setCellContents(newCellContents);
     }
   };
 
   const handleEuhSatzChange = (selectedEuhSatzOptions) => {
     setSelectedEuhSatzOptions(selectedEuhSatzOptions);
-    const selectedValues = selectedEuhSatzOptions;
-    setEuhSatz(selectedValues);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
-      const selectedDescriptions = selectedValues.map(option => option.value + ': ' + option.description);
-      newCellContents[selectedCell.row][selectedCell.col] = selectedDescriptions.join(', ');
+      const selectedDescriptions = selectedEuhSatzOptions.map(option => option.value + ': ' + option.description);
+      newCellContents[selectedCell.row][selectedCell.col] = selectedDescriptions.join('<br />');
       setCellContents(newCellContents);
     }
   };
+  
 
   useEffect(() => {
     // Fetch GHS options
     const fetchGhsOptions = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:5000/api/piktogramm');
+        const response = await axios.get(`${API_BASE_URL}/piktogramm`);
         setGhsList(response.data);
       } catch (error) {
         console.error("Error fetching GHS options", error);
@@ -88,7 +77,7 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
     //Fetch HSatz options
     const fetchHSatzOptions = async () => {
         try {
-            const response = await axios.get('http://127.0.0.1:5000/api/hsatz')
+            const response = await axios.get(`${API_BASE_URL}/hsatz`);
             setHSatzList(response.data);
         } catch (error) {
             console.error("Error fetching HSatz options", error);
@@ -102,7 +91,7 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
     //Fetch PSatz options
     const fetchPSatzOptions = async () => {
         try {
-            const response = await axios.get('http://127.0.0.1:5000/api/psatz')
+            const response = await axios.get(`${API_BASE_URL}/psatz`);
             setPSatzList(response.data);
         } catch (error) {
             console.error("Error fetching PSatz options", error);
@@ -116,7 +105,7 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
     //Fetch EuhSatz options
     const fetchEuhSatzOptions = async () => {
         try {
-            const response = await axios.get('http://127.0.0.1:5000/api/euhsatz')
+            const response = await axios.get(`${API_BASE_URL}/euhsatz`);
             setEuhSatzList(response.data);
         } catch (error) {
             console.error("Error fetching EuhSatz options", error);
@@ -138,6 +127,41 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
   const handleCellChange = (rowIndex, colIndex) => {
     setSelectedCell({ row: rowIndex, col: colIndex });
   };
+
+  const handleTable = () => {
+    // Check if editor instance is available
+    if (editorRef.current) {
+      let tableHtml = `<table style="border-collapse: collapse; border: 1px solid black; margin: 0 auto;">
+        <thead style="text-align: center; font-weight: bold;">
+          Mögliche Gefahren
+        </thead>
+        <tbody>`;
+  
+      // Iterate over cellContents to generate table rows
+      cellContents.forEach((row, rowIndex) => {
+        tableHtml += '<tr>';
+        row.forEach((cell, colIndex) => {
+          tableHtml += '<td style="padding: 50px; border: 1px solid black;">';
+          if (Array.isArray(cell)) {
+            cell.forEach((ghsImage, index) => {
+              tableHtml += `<img src="${ghsImage.src}" alt="" style="width: 100px; height: 100px;" />`;
+            });
+          } else {
+            tableHtml += cell;
+          }
+          tableHtml += '</td>';
+        });
+        tableHtml += '</tr>';
+      });
+  
+      tableHtml += '</tbody></table>';
+  
+      // Insert the HTML string at the current cursor position in the editor
+      editorRef.current.insertContent(tableHtml);
+    }
+  };
+  
+
 
   const ghsOptions = ghsList.map(ghs => ({ value: ghs._id, label: ghs._id, symbol: ghs.symbol }));
   const hSatzOptions = hSatzList.map(hSatz => ({value:hSatz._id, label: hSatz._id, description: hSatz.description}));
@@ -220,9 +244,8 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
           placeholder="Select an EUH"
         />
       </div>
-      
-      <div style={{ overflowX: 'auto' }}>
 
+      <div style={{ overflowX: 'auto' }}>
         <table style={{ borderCollapse: 'collapse', border: '1px solid black', margin: '0 auto'  }}>
             <thead style={{ textAlign: 'center', fontWeight: 'bold' }}>
                 Mögliche Gefahren
@@ -232,22 +255,30 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
               <tr key={rowIndex}>
                 {row.map((cell, colIndex) => (
                   <td
-                    key={colIndex}
+                    key={`${rowIndex}-${colIndex}`}
                     onClick={() => handleCellChange(rowIndex, colIndex)}
-                    style={{ padding: '50px', border: '1px solid black' }}
+                    style={{
+                      padding: '50px',
+                      border: '1px solid black',
+                      boxShadow: (selectedCell.row === rowIndex && selectedCell.col === colIndex) ? '0px 0px 10px 3px rgba(70,130,180,0.75)' : 'none'
+                    }}
                   >
-                    {Array.isArray(cell) ? (
-                      cell.map((ghsImage, index) => (
-                        <img
-                          key={index}
-                          src={ghsImage.src}
-                          alt=""
-                          style={{ width: '100px', height: '100px' }}
-                        />
-                      ))
-                    ) : (
-                      <span>{cell}</span>
-                    )}
+                    <div>
+                      {Array.isArray(cell) ? (
+                        cell.map((ghsImage, index) => (
+                          <img
+                            key={ghsImage.src}
+                            src={ghsImage.src}
+                            alt=""
+                            style={{ width: '100px', height: '100px' }}
+                          />
+                        ))
+                      ) : (
+                        <div>
+                          {cell}
+                        </div>
+                      )}
+                    </div>
                   </td>
                 ))}
               </tr>
@@ -256,6 +287,7 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
         </table>
       </div>
       
+      <button onClick={handleTable}>Enter Table</button>
       <button onClick={closeModal}>Cancel</button>
     </Modal>
   );
