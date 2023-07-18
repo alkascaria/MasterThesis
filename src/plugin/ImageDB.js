@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const IMAGE_API_URL ='http://127.0.0.1:5000/api/images';
+const IMAGE_API_URL ='http://127.0.0.1:5000/api/piktogramm';
 
 export function ImageDB(editor) {
   
@@ -8,17 +8,14 @@ export function ImageDB(editor) {
     text: 'Insert Symbol',
     fetch: async function(callback) {
       try {
-        // Calling `editor.ui.registry.updateMenuItem` function to dynamically update the menu items with the fetched images
-        // The DB formant is (id,acronym,description,symbol), the below 2 line changes according to the format of the DB
-
         const response = await axios.get(IMAGE_API_URL); //Fetching images from the database
         const images = response.data;
         
-        const items = images.map((image, index) => ({
+        const items = images.map((image) => ({
           type: 'menuitem',
-          text: image.acronym, 
+          text: image._id, 
           onAction: function() {
-            editor.insertContent(`<img src="${image.symbol}" alt="${image.acronym}"/>`);
+            editor.insertContent(`<img src="${image.symbol}" alt="${image._id}"/>`);
           }
         }));
         callback(items);

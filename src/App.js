@@ -7,6 +7,7 @@ import { addPlugins } from './files/PluginManger';
 import { ExperimentGroups } from './files/ExperimentGroup';
 import EditorModal from './files/EditorModal';
 import DeleteModal from './files/DeleteModal.js';
+import HPModal from './files/HPModal.js';
 
 export default function App() {
   const editorRef = useRef(null);
@@ -29,12 +30,16 @@ export default function App() {
   // Functions to open and close the modal window
   const [isEditorModalOpen, setIsEditorModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isHPModalOpen, setIsHPModalOpen] = useState(false);
 
   const openEditorModal = () => setIsEditorModalOpen(true);
   const closeEditorModal = () => setIsEditorModalOpen(false);
 
   const openDeleteModal = () => setIsDeleteModalOpen(true);
   const closeDeleteModal = () => setIsDeleteModalOpen(false);
+
+  const openHPModal = () => setIsHPModalOpen(true);
+  const closeHPModal = () => setIsHPModalOpen(false);
 
 
   // Define the custom plugin initialization within the setup function
@@ -119,10 +124,18 @@ export default function App() {
         setSelectedDoc = {setSelectedDoc}
       />
 
+      <HPModal
+        isModalOpen = {isHPModalOpen}
+        closeModal = {closeHPModal}
+        editorRef= {editorRef}
+
+      />
+
       <button onClick={log}>Log editor content</button>
       <button onClick={() => SaveFile(editorRef)}>Save File</button>
       <button onClick={openEditorModal}>Save to DB</button>
       <button onClick={openDeleteModal}>Delete from DB</button>
+      <button onClick={openHPModal}>Create Mögliche Gefahren Table</button>
     </>
   );
 }
