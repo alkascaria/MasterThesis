@@ -126,6 +126,12 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
 
   const handleCellChange = (rowIndex, colIndex) => {
     setSelectedCell({ row: rowIndex, col: colIndex });
+    
+    setChemicalName('');
+    setSelectedGhsOptions([]);
+    setSelectedHSatzOptions([]);
+    setSelectedPSatzOptions([]);
+    setSelectedEuhSatzOptions([]);
   };
 
   const handleTable = () => {
@@ -159,10 +165,9 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
       // Insert the HTML string at the current cursor position in the editor
       editorRef.current.insertContent(tableHtml);
     }
+    closeModal();
   };
   
-
-
   const ghsOptions = ghsList.map(ghs => ({ value: ghs._id, label: ghs._id, symbol: ghs.symbol }));
   const hSatzOptions = hSatzList.map(hSatz => ({value:hSatz._id, label: hSatz._id, description: hSatz.description}));
   const pSatzOptions = pSatzList.map(pSatz => ({value:pSatz._id, label: pSatz._id, description: pSatz.description}));
@@ -247,9 +252,14 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
 
       <div style={{ overflowX: 'auto' }}>
         <table style={{ borderCollapse: 'collapse', border: '1px solid black', margin: '0 auto'  }}>
-            <thead style={{ textAlign: 'center', fontWeight: 'bold' }}>
+          <thead>
+            <tr>
+              <th style={{ textAlign: 'center', fontWeight: 'bold' }}>
                 Mögliche Gefahren
-            </thead>
+              </th>
+            </tr>
+          </thead>
+
           <tbody>
             {cellContents.map((row, rowIndex) => (
               <tr key={rowIndex}>
