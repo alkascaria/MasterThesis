@@ -19,44 +19,51 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
   const [selectedPSatzOptions, setSelectedPSatzOptions] = useState([]);
   const [selectedEuhSatzOptions, setSelectedEuhSatzOptions] = useState([]);
 
+  const handleChemicalChange = (e) => {
+    setChemicalName(e.target.value);
+    if (selectedCell.row !== null && selectedCell.col !== null) {
+      const newCellContents = [...cellContents];
+      newCellContents[selectedCell.row][selectedCell.col] = [...(newCellContents[selectedCell.row][selectedCell.col] || []), { type: 'chemical', value: e.target.value}];
+      setCellContents(newCellContents);
+    }
+  };
+
   const handleGhsChange = (selectedGhsOptions) => {
     setSelectedGhsOptions(selectedGhsOptions);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
-      newCellContents[selectedCell.row][selectedCell.col] = selectedGhsOptions.map(Option => ({ src: Option.symbol }));
+      newCellContents[selectedCell.row][selectedCell.col] = [...(newCellContents[selectedCell.row][selectedCell.col] || []), { type: 'ghs', value: selectedGhsOptions.map(Option => ({ src: Option.symbol })) }];
       setCellContents(newCellContents);
     }
-  };
-  
-  const handleHSatzChange = (selectedHSatzOptions) => {
+};
+
+const handleHSatzChange = (selectedHSatzOptions) => {
     setSelectedHSatzOptions(selectedHSatzOptions);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
-      const selectedDescriptions = selectedHSatzOptions.map(option => option.value + ': ' + option.description);
-      newCellContents[selectedCell.row][selectedCell.col] = selectedDescriptions.join('<br />');
+      newCellContents[selectedCell.row][selectedCell.col] = [...(newCellContents[selectedCell.row][selectedCell.col] || []), { type: 'hsatz', value: selectedHSatzOptions.map(option => option.value + ': ' + option.description) }];
       setCellContents(newCellContents);
     }
-  };
+};
 
-  const handlePSatzChange = (selectedPSatzOptions) => {
+const handlePSatzChange = (selectedPSatzOptions) => {
     setSelectedPSatzOptions(selectedPSatzOptions);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
-      const selectedDescriptions = selectedPSatzOptions.map(option => option.value + ': ' + option.description);
-      newCellContents[selectedCell.row][selectedCell.col] = selectedDescriptions.join('<br />');
+      newCellContents[selectedCell.row][selectedCell.col] = [...(newCellContents[selectedCell.row][selectedCell.col] || []), { type: 'psatz', value: selectedPSatzOptions.map(option => option.value + ': ' + option.description) }];
       setCellContents(newCellContents);
     }
-  };
+};
 
-  const handleEuhSatzChange = (selectedEuhSatzOptions) => {
+const handleEuhSatzChange = (selectedEuhSatzOptions) => {
     setSelectedEuhSatzOptions(selectedEuhSatzOptions);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
-      const selectedDescriptions = selectedEuhSatzOptions.map(option => option.value + ': ' + option.description);
-      newCellContents[selectedCell.row][selectedCell.col] = selectedDescriptions.join('<br />');
+      newCellContents[selectedCell.row][selectedCell.col] = [...(newCellContents[selectedCell.row][selectedCell.col] || []), { type: 'euhsatz', value: selectedEuhSatzOptions.map(option => option.value + ': ' + option.description) }];
       setCellContents(newCellContents);
     }
-  };
+};
+
   
 
   useEffect(() => {
@@ -116,23 +123,32 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
   }, []);
   
   const handleAddRow = () => {
-    setCellContents([...cellContents, Array(cellContents[0].length).fill('')]);
-  };
+    setCellContents([...cellContents, Array(cellContents[0].length).fill([])]);
+};
 
-  const handleAddColumn = () => {
-    setCellContents(cellContents.map(row => [...row, '']));
-  };
+const handleAddColumn = () => {
+    setCellContents(cellContents.map(row => [...row, []]));
+};
 
 
-  const handleCellChange = (rowIndex, colIndex) => {
-    setSelectedCell({ row: rowIndex, col: colIndex });
-    
-    setChemicalName('');
-    setSelectedGhsOptions([]);
-    setSelectedHSatzOptions([]);
-    setSelectedPSatzOptions([]);
-    setSelectedEuhSatzOptions([]);
-  };
+
+const handleCellChange = (rowIndex, colIndex) => {
+  setSelectedCell({ row: rowIndex, col: colIndex });
+  
+  const selectedCellContent = cellContents[rowIndex][colIndex];
+  
+  const chemical = selectedCellContent.find(item => item.type === 'chemical');
+  const ghs = selectedCellContent.filter(item => item.type === 'ghs');
+  const hsatz = selectedCellContent.filter(item => item.type === 'hsatz');
+  const psatz = selectedCellContent.filter(item => item.type === 'psatz');
+  const euhsatz = selectedCellContent.filter(item => item.type === 'euhsatz');
+  
+  setChemicalName(chemical ? chemical.value : '');
+  setSelectedGhsOptions(ghs.length > 0 ? ghs.map(item => ({ value: item.value[0].src, label: item.value[0].src, symbol: item.value[0].src })) : []);
+  setSelectedHSatzOptions(hsatz.length > 0 ? hsatz.map(item => ({ value: item.value.split(':')[0], label: item.value.split(':')[0] })) : []);
+  setSelectedPSatzOptions(psatz.length > 0 ? psatz.map(item => ({ value: item.value.split(':')[0], label: item.value.split(':')[0] })) : []);
+  setSelectedEuhSatzOptions(euhsatz.length > 0 ? euhsatz.map(item => ({ value: item.value.split(':')[0], label: item.value.split(':')[0] })) : []);
+};
 
   const handleTable = () => {
     // Check if editor instance is available
@@ -149,8 +165,16 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
         row.forEach((cell, colIndex) => {
           tableHtml += '<td style="padding: 50px; border: 1px solid black;">';
           if (Array.isArray(cell)) {
-            cell.forEach((ghsImage, index) => {
-              tableHtml += `<img src="${ghsImage.src}" alt="" style="width: 100px; height: 100px;" />`;
+            cell.forEach((item, index) => {
+              if (item.type === 'ghs') {
+                item.value.forEach(ghsImage => {
+                  tableHtml += `<img src="${ghsImage.src}" alt="" style="width: 100px; height: 100px;" />`;
+                });
+              } else if (item.type === 'chemical') {
+                tableHtml += `<p>${item.value}</p>`;
+              } else {
+                tableHtml += `<p>${Array.isArray(item.value) ? item.value.join('<br />') : item.value.replace(/: /g, ": <br />")}</p>`;
+              }
             });
           } else {
             tableHtml += cell;
@@ -167,6 +191,7 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
     }
     closeModal();
   };
+  
   
   const ghsOptions = ghsList.map(ghs => ({ value: ghs._id, label: ghs._id, symbol: ghs.symbol }));
   const hSatzOptions = hSatzList.map(hSatz => ({value:hSatz._id, label: hSatz._id, description: hSatz.description}));
@@ -194,14 +219,7 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
         <input
           id="chemicalName"
           value={chemicalName}
-          onChange={(e) => {
-            setChemicalName(e.target.value);
-            if (selectedCell.row !== null && selectedCell.col !== null) {
-              const newCellContents = [...cellContents];
-              newCellContents[selectedCell.row][selectedCell.col] = e.target.value;
-              setCellContents(newCellContents);
-            }
-          }}
+          onChange={handleChemicalChange}
           placeholder="Enter Chemical Name"
         />
       </div>
@@ -259,7 +277,6 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
               </th>
             </tr>
           </thead>
-
           <tbody>
             {cellContents.map((row, rowIndex) => (
               <tr key={rowIndex}>
@@ -275,14 +292,29 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
                   >
                     <div>
                       {Array.isArray(cell) ? (
-                        cell.map((ghsImage, index) => (
-                          <img
-                            key={ghsImage.src}
-                            src={ghsImage.src}
-                            alt=""
-                            style={{ width: '100px', height: '100px' }}
-                          />
-                        ))
+                        cell.map((item, index) => {
+                          if (item.type === 'ghs') {
+                            return item.value.map(ghsImage => (
+                              <img
+                                key={ghsImage.src}
+                                src={ghsImage.src}
+                                alt=""
+                                style={{ width: '100px', height: '100px' }}
+                              />
+                            ));
+                          } else if (item.type === 'chemical') {
+                            return (
+                              <div key={index}>
+                                {item.value}
+                              </div>
+                            );
+                          } else {
+                            return (
+                              <div key={index} dangerouslySetInnerHTML={{ __html: Array.isArray(item.value) ? item.value.join('<br />') : item.value.replace(/: /g, ": <br />") }}>
+                              </div>
+                            );
+                          }
+                        })
                       ) : (
                         <div>
                           {cell}
