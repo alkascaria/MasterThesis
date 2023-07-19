@@ -132,23 +132,15 @@ const handleAddColumn = () => {
 
 
 
-const handleCellChange = (rowIndex, colIndex) => {
-  setSelectedCell({ row: rowIndex, col: colIndex });
-  
-  const selectedCellContent = cellContents[rowIndex][colIndex];
-  
-  const chemical = selectedCellContent.find(item => item.type === 'chemical');
-  const ghs = selectedCellContent.filter(item => item.type === 'ghs');
-  const hsatz = selectedCellContent.filter(item => item.type === 'hsatz');
-  const psatz = selectedCellContent.filter(item => item.type === 'psatz');
-  const euhsatz = selectedCellContent.filter(item => item.type === 'euhsatz');
-  
-  setChemicalName(chemical ? chemical.value : '');
-  setSelectedGhsOptions(ghs.length > 0 ? ghs.map(item => ({ value: item.value[0].src, label: item.value[0].src, symbol: item.value[0].src })) : []);
-  setSelectedHSatzOptions(hsatz.length > 0 ? hsatz.map(item => ({ value: item.value.split(':')[0], label: item.value.split(':')[0] })) : []);
-  setSelectedPSatzOptions(psatz.length > 0 ? psatz.map(item => ({ value: item.value.split(':')[0], label: item.value.split(':')[0] })) : []);
-  setSelectedEuhSatzOptions(euhsatz.length > 0 ? euhsatz.map(item => ({ value: item.value.split(':')[0], label: item.value.split(':')[0] })) : []);
-};
+  const handleCellChange = (rowIndex, colIndex) => {
+    setSelectedCell({ row: rowIndex, col: colIndex });
+    
+    setChemicalName('');
+    setSelectedGhsOptions([]);
+    setSelectedHSatzOptions([]);
+    setSelectedPSatzOptions([]);
+    setSelectedEuhSatzOptions([]);
+  };
 
   const handleTable = () => {
     // Check if editor instance is available
