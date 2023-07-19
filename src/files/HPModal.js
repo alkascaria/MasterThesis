@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
-import axios from 'axios';
 import Select from 'react-select';
-
-const API_BASE_URL = "http://127.0.0.1:5000/api";
+import * as apiService from './apiService';
 
 const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
   const [chemicalName, setChemicalName] = useState('');
@@ -12,12 +10,95 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
   const [pSatzList, setPSatzList] = useState([]);
   const [euhSatzList, setEuhSatzList] = useState([]);
   const [selectedCell, setSelectedCell] = useState({ row: null, col: null });
-  const [cellContents, setCellContents] = useState([[{ chemical: [], ghs: [], hsatz: [], psatz: [], euhsatz: [] }]]);
+  const [cellContents, setCellContents] = useState([[{ chemical: '', ghs: [], hsatz: [], psatz: [], euhsatz: [] }]]);
 
-  const [selectedGhsOptions, setSelectedGhsOptions] = useState([]);
-  const [selectedHSatzOptions, setSelectedHSatzOptions] = useState([]);
-  const [selectedPSatzOptions, setSelectedPSatzOptions] = useState([]);
-  const [selectedEuhSatzOptions, setSelectedEuhSatzOptions] = useState([]);
+  const [selectedGhs, setSelectedGhs] = useState([]);
+  const [selectedHSatz, setSelectedHSatz] = useState([]);
+  const [selectedPSatz, setSelectedPSatz] = useState([]);
+  const [selectedEuhSatz, setSelectedEuhSatz] = useState([]);
+
+  const handleAddRow = () => {
+    setCellContents([...cellContents, Array(cellContents[0].length).fill({ chemical: '', ghs: [], hsatz: [], psatz: [], euhsatz: [] })]);
+  };
+  
+  const handleAddColumn = () => {
+    setCellContents(cellContents.map(row => [...row, { chemical: '', ghs: [], hsatz: [], psatz: [], euhsatz: [] }]));
+  };
+
+  const handleDeleteRow = () => {
+    if (cellContents.length > 1) {
+      const newCellContents = [...cellContents];
+      newCellContents.pop();
+      setCellContents(newCellContents);
+    }
+  };
+  
+  const handleDeleteColumn = () => {
+    if (cellContents[0].length > 1) {
+      const newCellContents = cellContents.map(row => {
+        const newRow = [...row];
+        newRow.pop();
+        return newRow;
+      });
+      setCellContents(newCellContents);
+    }
+  };
+
+  useEffect(() => {
+    //Fetch GHS options
+    const fetchGhsOptions = async () => {
+      try {
+        const response = await apiService.fetchGhsOptions();
+        setGhsList(response.data);
+      } catch (error) {
+        console.error("Error fetching GHS options", error);
+      }
+    };
+  
+    fetchGhsOptions();
+  }, []);
+
+  useEffect(() => {
+    //Fetch HSatz options
+    const fetchHSatzOptions = async () => {
+      try {
+        const response = await apiService.fetchHSatzOptions();
+        setHSatzList(response.data);
+      } catch (error) {
+        console.error("Error fetching HSatz options", error);
+      }
+    };
+  
+    fetchHSatzOptions();
+  }, []);
+
+  useEffect(() => {
+    //Fetch PSatz options
+    const fetchPSatzOptions = async () => {
+      try {
+        const response = await apiService.fetchPSatzOptions();
+        setPSatzList(response.data);
+      } catch (error) {
+        console.error("Error fetching PSatz options", error);
+      }
+    };
+  
+    fetchPSatzOptions();
+  }, []);
+
+  useEffect(() => {
+    //Fetch EUHSatz options
+    const fetchEuhSatzOptions = async () => {
+      try {
+        const response = await apiService.fetchEuhSatzOptions();
+        setEuhSatzList(response.data);
+      } catch (error) {
+        console.error("Error fetching EuhSatz options", error);
+      }
+    };
+  
+    fetchEuhSatzOptions();
+  }, []);
 
   const handleChemicalChange = (e) => {
     setChemicalName(e.target.value);
@@ -28,19 +109,47 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
       setCellContents(newCellContents);
     }
   };
+
+  const GhsDropdown = ({ options, value, onChange }) => (
+    <div>
+        <label>Select GHS Nummer: </label>
+        <Select
+          isMulti
+          options={options}
+          onChange={onChange}
+          placeholder="Select GHS Nummer"
+          value={value}
+        />
+    </div>
+  );
+  const ghsOptions = ghsList.map(ghs => ({ value: ghs._id, label: ghs._id, symbol: ghs.symbol }));
   
   const handleGhsChange = (selectedGhsOptions) => {
-    setSelectedGhsOptions(selectedGhsOptions);
+    setSelectedGhs(selectedGhsOptions);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
       const cellContent = newCellContents[selectedCell.row][selectedCell.col];
-      cellContent.ghs = selectedGhsOptions.map(Option => ({ src: Option.symbol }));
+      cellContent.ghs = selectedGhsOptions.map(option => ({ src: option.symbol }));
       setCellContents(newCellContents);
     }
   };
+
+  const HSatzDropdown = ({ options, value, onChange }) => (
+    <div>
+        <label>Select HSatz Nummer: </label>
+        <Select
+          isMulti
+          options={options}
+          onChange={onChange}
+          placeholder="Select HSatz Nummer"
+          value={value}
+        />
+    </div>
+  );
+  const hSatzOptions = hSatzList.map(hSatz => ({value:hSatz._id, label: hSatz._id, description: hSatz.description}));
   
   const handleHSatzChange = (selectedHSatzOptions) => {
-    setSelectedHSatzOptions(selectedHSatzOptions);
+    setSelectedHSatz(selectedHSatzOptions);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
       const cellContent = newCellContents[selectedCell.row][selectedCell.col];
@@ -48,9 +157,23 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
       setCellContents(newCellContents);
     }
   };
+
+  const PSatzDropdown = ({ options, value, onChange }) => (
+    <div>
+        <label>Select PSatz Nummer: </label>
+        <Select
+          isMulti
+          options={options}
+          onChange={onChange}
+          placeholder="Select PSatz Nummer"
+          value={value}
+        />
+    </div>
+  );
+  const pSatzOptions = pSatzList.map(pSatz => ({value:pSatz._id, label: pSatz._id, description: pSatz.description}));
   
   const handlePSatzChange = (selectedPSatzOptions) => {
-    setSelectedPSatzOptions(selectedPSatzOptions);
+    setSelectedPSatz(selectedPSatzOptions);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
       const cellContent = newCellContents[selectedCell.row][selectedCell.col];
@@ -58,9 +181,23 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
       setCellContents(newCellContents);
     }
   };
+
+  const EuhSatzDropdown = ({ options, value, onChange }) => (
+    <div>
+        <label>Select EuhSatz Nummer: </label>
+        <Select
+          isMulti
+          options={options}
+          onChange={onChange}
+          placeholder="Select EuhSatz Nummer"
+          value={value}
+        />
+    </div>
+  );
+  const euhOptions = euhSatzList.map(euh => ({value:euh._id, label: euh._id, description: euh.description}));
   
   const handleEuhSatzChange = (selectedEuhSatzOptions) => {
-    setSelectedEuhSatzOptions(selectedEuhSatzOptions);
+    setSelectedEuhSatz(selectedEuhSatzOptions);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
       const cellContent = newCellContents[selectedCell.row][selectedCell.col];
@@ -69,109 +206,57 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
     }
   };
   
-  useEffect(() => {
-    // Fetch GHS options
-    const fetchGhsOptions = async () => {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/piktogramm`);
-        setGhsList(response.data);
-      } catch (error) {
-        console.error("Error fetching GHS options", error);
-      }
-    };
-
-    fetchGhsOptions();
-  }, []);
-
-  useEffect(() => {
-    //Fetch HSatz options
-    const fetchHSatzOptions = async () => {
-        try {
-            const response = await axios.get(`${API_BASE_URL}/hsatz`);
-            setHSatzList(response.data);
-        } catch (error) {
-            console.error("Error fetching HSatz options", error);
-        }
-    };
-
-    fetchHSatzOptions();
-  }, []);
-
-  useEffect(() => {
-    //Fetch PSatz options
-    const fetchPSatzOptions = async () => {
-        try {
-            const response = await axios.get(`${API_BASE_URL}/psatz`);
-            setPSatzList(response.data);
-        } catch (error) {
-            console.error("Error fetching PSatz options", error);
-        }
-    };
-
-    fetchPSatzOptions();
-  }, []);
-
-  useEffect(() => {
-    //Fetch EuhSatz options
-    const fetchEuhSatzOptions = async () => {
-        try {
-            const response = await axios.get(`${API_BASE_URL}/euhsatz`);
-            setEuhSatzList(response.data);
-        } catch (error) {
-            console.error("Error fetching EuhSatz options", error);
-        }
-    };
-
-    fetchEuhSatzOptions();
-  }, []);
-  
-  const handleAddRow = () => {
-    setCellContents([...cellContents, Array(cellContents[0].length).fill({ chemical: [], ghs: [], hsatz: [], psatz: [], euhsatz: [] })]);
-  };
-  
-  const handleAddColumn = () => {
-    setCellContents(cellContents.map(row => [...row, { chemical: [], ghs: [], hsatz: [], psatz: [], euhsatz: [] }]));
-  };
-  
   const handleCellChange = (rowIndex, colIndex) => {
     setSelectedCell({ row: rowIndex, col: colIndex });
-    
-    setChemicalName('');
-    setSelectedGhsOptions([]);
-    setSelectedHSatzOptions([]);
-    setSelectedPSatzOptions([]);
-    setSelectedEuhSatzOptions([]);
+  
+    // Get the content for the new cell
+    const cellContent = cellContents[rowIndex][colIndex];
+  
+    // Update chemical name
+    setChemicalName(cellContent.chemical);
+  
+    // If cellContent has ghs, hsatz, psatz, or euhsatz then set them to the respective states.
+    setSelectedGhs(cellContent.ghs.map(item => ghsOptions.find(option => option.symbol === item.src)) || []);
+    setSelectedHSatz(cellContent.hsatz.map(item => hSatzOptions.find(option => option.value + ': ' + option.description === item)) || []);
+    setSelectedPSatz(cellContent.psatz.map(item => pSatzOptions.find(option => option.value + ': ' + option.description === item)) || []);
+    setSelectedEuhSatz(cellContent.euhsatz.map(item => euhOptions.find(option => option.value + ': ' + option.description === item)) || []);
+  };
+
+  const generateImgHtml = (src) => `<img src="${src}" alt="" style="width: 80px; height: 80px;" />`;
+
+  const generateCellHtml = (cell) => {
+    return `
+      <td style="border: 2px solid black; border-bottom: border: 1px solid black; padding: 10px; font-size: large; width: 50%;">
+        <div>${cell.chemical}</div>
+        <br />
+        ${cell.ghs.map(item => generateImgHtml(item.src)).join('')}
+        <br />
+        ${cell.hsatz.join('<br />')}
+        <br />
+        ${cell.psatz.join('<br />')}
+        <br />
+        ${cell.euhsatz.join('<br />')}
+      </td>
+    `;
+  };
+
+  const generateRowHtml = (row) => {
+    return `<tr style="vertical-align: top;">${row.map(cell => generateCellHtml(cell)).join('<br />')}</tr>`;
   };
 
   const handleTable = () => {
     // Check if editor instance is available
     if (editorRef.current) {
       let tableHtml = 
-      `<table style="font-size: x-large; border-spacing: 0; margin: 0 auto;">
-        <tr>
-          <th colspan=2 style="font-size: xx-large;"> Mögliche Gefahren </th>
-        </tr>`;
+      `
+        <table style="font-size: x-large; border-spacing: 0; margin: 0 auto; table-layout: fixed;">
+          <tr>
+            <th colspan=2 style="font-size: xx-large;"> Mögliche Gefahren </th>
+          </tr>
+        `;
         // Iterate over cellContents to generate table rows
-        cellContents.forEach((row, rowIndex) => {
-          tableHtml += '<tr style="vertical-align: top;">';
-          row.forEach((cell, colIndex) => {
-            tableHtml += '<td style="border:2px solid black;border-bottom:0;padding:10px;font-size:large;">';
-            tableHtml += `<div>${cell.chemical}</div>`;
-            cell.ghs.forEach((item, index) => {
-              tableHtml += `<img src="${item.src}" alt="" style="width: 80px; height: 80px;" />`;
-            });
-            cell.hsatz.forEach((item, index) => {
-              tableHtml += `<div>${item}</div>`;
-            });
-            cell.psatz.forEach((item, index) => {
-              tableHtml += `<div>${item}</div>`;
-            });
-            cell.euhsatz.forEach((item, index) => {
-              tableHtml += `<div>${item}</div>`;
-            });
-            tableHtml += '</td>';
-          });
-          tableHtml += '</tr>';
+        cellContents.forEach(row => {
+          tableHtml += generateRowHtml(row);
         });
       
       tableHtml += '</tbody></table>';
@@ -181,11 +266,6 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
     }
     closeModal();
   };
-  
-  const ghsOptions = ghsList.map(ghs => ({ value: ghs._id, label: ghs._id, symbol: ghs.symbol }));
-  const hSatzOptions = hSatzList.map(hSatz => ({value:hSatz._id, label: hSatz._id, description: hSatz.description}));
-  const pSatzOptions = pSatzList.map(pSatz => ({value:pSatz._id, label: pSatz._id, description: pSatz.description}));
-  const euhOptions = euhSatzList.map(euh => ({value:euh._id, label: euh._id, description: euh.description}));
 
   return (
     <Modal
@@ -197,10 +277,12 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
 
       <div>
         <button onClick={handleAddRow}>+ Row</button>
+        <button onClick={handleDeleteRow}>- Row</button>
       </div>
         
       <div>
         <button onClick={handleAddColumn}>+ Column</button>
+        <button onClick={handleDeleteColumn}>- Column</button>
       </div>
         
       <div>
@@ -212,50 +294,30 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
           placeholder="Enter Chemical Name"
         />
       </div>
-        
-      <div>
-        <label>Select GHS Nummer: </label>
-        <Select
-          isMulti
-          options={ghsOptions}
-          value={selectedGhsOptions}
-          onChange={handleGhsChange}
-          placeholder="Select GHS Nummer"
-        />
-      </div>
 
-      <div>
-        <label>Select a HSatz: </label>
-        <Select
-          isMulti
-          options={hSatzOptions}
-          value={selectedHSatzOptions}
-          onChange={handleHSatzChange}
-          placeholder="Select H Satz"
-        />
-      </div>
+      <GhsDropdown
+        options={ghsOptions}
+        value={selectedGhs}
+        onChange={handleGhsChange}
+      />
 
-      <div>
-        <label>Select a Psatz: </label>
-        <Select
-          isMulti
-          options={pSatzOptions}
-          value={selectedPSatzOptions}
-          onChange={handlePSatzChange}
-          placeholder="Select P Satz"
-        />
-      </div>
-        
-      <div>
-        <label>Select a EUH: </label>
-        <Select
-          isMulti
-          options={euhOptions}
-          value={selectedEuhSatzOptions}
-          onChange={handleEuhSatzChange}
-          placeholder="Select an EUH"
-        />
-      </div>
+      <HSatzDropdown
+        options={hSatzOptions}
+        value={selectedHSatz}
+        onChange={handleHSatzChange}
+      />
+
+      <PSatzDropdown
+        options={pSatzOptions}
+        value={selectedPSatz}
+        onChange={handlePSatzChange}
+      />
+
+      <EuhSatzDropdown
+        options={euhOptions}
+        value={selectedEuhSatz}
+        onChange={handleEuhSatzChange}
+      />
 
       <div style={{ overflowX: 'auto' }}>
         <table style={{ borderCollapse: 'collapse', border: '1px solid black', margin: '0 auto'  }}>

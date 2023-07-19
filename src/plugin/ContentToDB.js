@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = "http://127.0.0.1:5000/api";
+import * as apiService from'../files/apiService';
 
 // Writing contents into DB
 export const saveToDB = async (groupToSave, docName, editorRef, setIsModalOpen, setGroupFunction, setName) => {
@@ -26,7 +24,7 @@ export const saveToDB = async (groupToSave, docName, editorRef, setIsModalOpen, 
     try {
 
       // Fetch all groups from the database
-      const groupResponse = await axios.get(`${API_BASE_URL}/groups`);
+      const groupResponse = await  apiService.fetchGroups();
       const groups = groupResponse.data;
 
       // Check if the group exists
@@ -35,26 +33,26 @@ export const saveToDB = async (groupToSave, docName, editorRef, setIsModalOpen, 
       if(groupExists)
       {
         // Check if the document already exists
-        const response = await axios.get(`${API_BASE_URL}/checkContent/${docName}/${groupToSave}`);
+        const response = await apiService.checkContents(docName,groupToSave);
       
         if (response.data.exists) {
           const update = window.confirm('This document already exists. Do you want to update it?');
 
           if (update) {
             // Update the existing document
-              await axios.put(`${API_BASE_URL}/updateContent/${docName}`, data);
+            await apiService.updateContents(docName,data);
             alert('Content updated in the database!');
           } else {
             alert('Please enter a new document name.');
           }
         } else {
           // Create a new document
-          await axios.post(`${API_BASE_URL}/saveContent`, data);
+          await apiService.saveContents(data);
           alert('Content saved to the database!');
         }
       } else {
         // Create a new document with new group
-        await axios.post(`${API_BASE_URL}/saveContent`, data);
+        await apiService.saveContents(data);
         alert('Content saved to the database!');
       }
 

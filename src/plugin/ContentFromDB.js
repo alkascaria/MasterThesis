@@ -1,4 +1,4 @@
-import axios from 'axios';
+import * as apiService from'../files/apiService';
 
 export function ContentDB(editor) {
 
@@ -8,7 +8,7 @@ export function ContentDB(editor) {
     async fetch(callback) {
       try {
 
-        const response = await axios.get('http://127.0.0.1:5000/api/contents');
+        const response = await apiService.fetchContents();
         const dbContents = response.data;
 
         // Group the content by groupID

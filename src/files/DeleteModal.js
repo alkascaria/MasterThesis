@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
-import axios from 'axios';
+import * as apiService from './apiService';
 
 const customModalStyles = { 
   content: {
@@ -32,7 +32,7 @@ export default function DeleteModal({
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await axios.get('http://127.0.0.1:5000/api/contents');
+      const response = await apiService.fetchContents();
       const dbContents = response.data;
 
       let groups = dbContents.reduce((groups, content) => {
@@ -63,7 +63,7 @@ export default function DeleteModal({
             };
         }
         console.log(data);
-        const response = await axios.delete('http://127.0.0.1:5000/api/delete', { data });
+        const response = await apiService.deleteContents(data);
       
       if (response.status === 200) {
         alert('Sucessfully deleted');
