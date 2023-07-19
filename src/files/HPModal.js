@@ -11,8 +11,8 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
   const [hSatzList, setHSatzList] = useState([]);
   const [pSatzList, setPSatzList] = useState([]);
   const [euhSatzList, setEuhSatzList] = useState([]);
-  const [cellContents, setCellContents] = useState([['']]);
   const [selectedCell, setSelectedCell] = useState({ row: null, col: null });
+  const [cellContents, setCellContents] = useState([[{ chemical: [], ghs: [], hsatz: [], psatz: [], euhsatz: [] }]]);
 
   const [selectedGhsOptions, setSelectedGhsOptions] = useState([]);
   const [selectedHSatzOptions, setSelectedHSatzOptions] = useState([]);
@@ -23,49 +23,52 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
     setChemicalName(e.target.value);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
-      newCellContents[selectedCell.row][selectedCell.col] = [...(newCellContents[selectedCell.row][selectedCell.col] || []), { type: 'chemical', value: e.target.value}];
+      const cellContent = newCellContents[selectedCell.row][selectedCell.col];
+      cellContent.chemical = e.target.value;
       setCellContents(newCellContents);
     }
   };
-
+  
   const handleGhsChange = (selectedGhsOptions) => {
     setSelectedGhsOptions(selectedGhsOptions);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
-      newCellContents[selectedCell.row][selectedCell.col] = [...(newCellContents[selectedCell.row][selectedCell.col] || []), { type: 'ghs', value: selectedGhsOptions.map(Option => ({ src: Option.symbol })) }];
+      const cellContent = newCellContents[selectedCell.row][selectedCell.col];
+      cellContent.ghs = selectedGhsOptions.map(Option => ({ src: Option.symbol }));
       setCellContents(newCellContents);
     }
-};
-
-const handleHSatzChange = (selectedHSatzOptions) => {
+  };
+  
+  const handleHSatzChange = (selectedHSatzOptions) => {
     setSelectedHSatzOptions(selectedHSatzOptions);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
-      newCellContents[selectedCell.row][selectedCell.col] = [...(newCellContents[selectedCell.row][selectedCell.col] || []), { type: 'hsatz', value: selectedHSatzOptions.map(option => option.value + ': ' + option.description) }];
+      const cellContent = newCellContents[selectedCell.row][selectedCell.col];
+      cellContent.hsatz = selectedHSatzOptions.map(option => option.value + ': ' + option.description);
       setCellContents(newCellContents);
     }
-};
-
-const handlePSatzChange = (selectedPSatzOptions) => {
+  };
+  
+  const handlePSatzChange = (selectedPSatzOptions) => {
     setSelectedPSatzOptions(selectedPSatzOptions);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
-      newCellContents[selectedCell.row][selectedCell.col] = [...(newCellContents[selectedCell.row][selectedCell.col] || []), { type: 'psatz', value: selectedPSatzOptions.map(option => option.value + ': ' + option.description) }];
+      const cellContent = newCellContents[selectedCell.row][selectedCell.col];
+      cellContent.psatz = selectedPSatzOptions.map(option => option.value + ': ' + option.description);
       setCellContents(newCellContents);
     }
-};
-
-const handleEuhSatzChange = (selectedEuhSatzOptions) => {
+  };
+  
+  const handleEuhSatzChange = (selectedEuhSatzOptions) => {
     setSelectedEuhSatzOptions(selectedEuhSatzOptions);
     if (selectedCell.row !== null && selectedCell.col !== null) {
       const newCellContents = [...cellContents];
-      newCellContents[selectedCell.row][selectedCell.col] = [...(newCellContents[selectedCell.row][selectedCell.col] || []), { type: 'euhsatz', value: selectedEuhSatzOptions.map(option => option.value + ': ' + option.description) }];
+      const cellContent = newCellContents[selectedCell.row][selectedCell.col];
+      cellContent.euhsatz = selectedEuhSatzOptions.map(option => option.value + ': ' + option.description);
       setCellContents(newCellContents);
     }
-};
-
+  };
   
-
   useEffect(() => {
     // Fetch GHS options
     const fetchGhsOptions = async () => {
@@ -123,15 +126,13 @@ const handleEuhSatzChange = (selectedEuhSatzOptions) => {
   }, []);
   
   const handleAddRow = () => {
-    setCellContents([...cellContents, Array(cellContents[0].length).fill([])]);
-};
-
-const handleAddColumn = () => {
-    setCellContents(cellContents.map(row => [...row, []]));
-};
-
-
-
+    setCellContents([...cellContents, Array(cellContents[0].length).fill({ chemical: [], ghs: [], hsatz: [], psatz: [], euhsatz: [] })]);
+  };
+  
+  const handleAddColumn = () => {
+    setCellContents(cellContents.map(row => [...row, { chemical: [], ghs: [], hsatz: [], psatz: [], euhsatz: [] }]));
+  };
+  
   const handleCellChange = (rowIndex, colIndex) => {
     setSelectedCell({ row: rowIndex, col: colIndex });
     
@@ -145,37 +146,34 @@ const handleAddColumn = () => {
   const handleTable = () => {
     // Check if editor instance is available
     if (editorRef.current) {
-      let tableHtml = `<table style="border-collapse: collapse; border: 1px solid black; margin: 0 auto;">
-        <thead style="text-align: center; font-weight: bold;">
-          Mögliche Gefahren
-        </thead>
-        <tbody>`;
-  
-      // Iterate over cellContents to generate table rows
-      cellContents.forEach((row, rowIndex) => {
-        tableHtml += '<tr>';
-        row.forEach((cell, colIndex) => {
-          tableHtml += '<td style="padding: 50px; border: 1px solid black;">';
-          if (Array.isArray(cell)) {
-            cell.forEach((item, index) => {
-              if (item.type === 'ghs') {
-                item.value.forEach(ghsImage => {
-                  tableHtml += `<img src="${ghsImage.src}" alt="" style="width: 100px; height: 100px;" />`;
-                });
-              } else if (item.type === 'chemical') {
-                tableHtml += `<p>${item.value}</p>`;
-              } else {
-                tableHtml += `<p>${Array.isArray(item.value) ? item.value.join('<br />') : item.value.replace(/: /g, ": <br />")}</p>`;
-              }
+      let tableHtml = 
+      `<table style="font-size: x-large; border-spacing: 0; margin: 0 auto;">
+        <tr>
+          <th colspan=2 style="font-size: xx-large;"> Mögliche Gefahren </th>
+        </tr>`;
+        // Iterate over cellContents to generate table rows
+        cellContents.forEach((row, rowIndex) => {
+          tableHtml += '<tr style="vertical-align: top;">';
+          row.forEach((cell, colIndex) => {
+            tableHtml += '<td style="border:2px solid black;border-bottom:0;padding:10px;font-size:large;">';
+            tableHtml += `<div>${cell.chemical}</div>`;
+            cell.ghs.forEach((item, index) => {
+              tableHtml += `<img src="${item.src}" alt="" style="width: 80px; height: 80px;" />`;
             });
-          } else {
-            tableHtml += cell;
-          }
-          tableHtml += '</td>';
+            cell.hsatz.forEach((item, index) => {
+              tableHtml += `<div>${item}</div>`;
+            });
+            cell.psatz.forEach((item, index) => {
+              tableHtml += `<div>${item}</div>`;
+            });
+            cell.euhsatz.forEach((item, index) => {
+              tableHtml += `<div>${item}</div>`;
+            });
+            tableHtml += '</td>';
+          });
+          tableHtml += '</tr>';
         });
-        tableHtml += '</tr>';
-      });
-  
+      
       tableHtml += '</tbody></table>';
   
       // Insert the HTML string at the current cursor position in the editor
@@ -183,7 +181,6 @@ const handleAddColumn = () => {
     }
     closeModal();
   };
-  
   
   const ghsOptions = ghsList.map(ghs => ({ value: ghs._id, label: ghs._id, symbol: ghs.symbol }));
   const hSatzOptions = hSatzList.map(hSatz => ({value:hSatz._id, label: hSatz._id, description: hSatz.description}));
@@ -201,11 +198,11 @@ const handleAddColumn = () => {
       <div>
         <button onClick={handleAddRow}>+ Row</button>
       </div>
-      
+        
       <div>
         <button onClick={handleAddColumn}>+ Column</button>
       </div>
-      
+        
       <div>
         <label>Enter Chemical Name: </label>
         <input
@@ -215,7 +212,7 @@ const handleAddColumn = () => {
           placeholder="Enter Chemical Name"
         />
       </div>
-      
+        
       <div>
         <label>Select GHS Nummer: </label>
         <Select
@@ -230,11 +227,11 @@ const handleAddColumn = () => {
       <div>
         <label>Select a HSatz: </label>
         <Select
-            isMulti
-            options={hSatzOptions}
-            value={selectedHSatzOptions}
-            onChange={handleHSatzChange}
-            placeholder="Select H Satz"
+          isMulti
+          options={hSatzOptions}
+          value={selectedHSatzOptions}
+          onChange={handleHSatzChange}
+          placeholder="Select H Satz"
         />
       </div>
 
@@ -248,7 +245,7 @@ const handleAddColumn = () => {
           placeholder="Select P Satz"
         />
       </div>
-      
+        
       <div>
         <label>Select a EUH: </label>
         <Select
@@ -279,39 +276,28 @@ const handleAddColumn = () => {
                     style={{
                       padding: '50px',
                       border: '1px solid black',
-                      boxShadow: (selectedCell.row === rowIndex && selectedCell.col === colIndex) ? '0px 0px 10px 3px rgba(70,130,180,0.75)' : 'none'
+                      boxShadow: (selectedCell.row === rowIndex && selectedCell.col === colIndex) ? '0px 0px 10px 3px rgba(70,130,180,0.75)' : 'none' //Blue rgb
                     }}
                   >
                     <div>
-                      {Array.isArray(cell) ? (
-                        cell.map((item, index) => {
-                          if (item.type === 'ghs') {
-                            return item.value.map(ghsImage => (
-                              <img
-                                key={ghsImage.src}
-                                src={ghsImage.src}
-                                alt=""
-                                style={{ width: '100px', height: '100px' }}
-                              />
-                            ));
-                          } else if (item.type === 'chemical') {
-                            return (
-                              <div key={index}>
-                                {item.value}
-                              </div>
-                            );
-                          } else {
-                            return (
-                              <div key={index} dangerouslySetInnerHTML={{ __html: Array.isArray(item.value) ? item.value.join('<br />') : item.value.replace(/: /g, ": <br />") }}>
-                              </div>
-                            );
-                          }
-                        })
-                      ) : (
-                        <div>
-                          {cell}
-                        </div>
-                      )}
+                      <div>{cell.chemical}</div>
+                      {cell.ghs.map((item, index) => (
+                        <img
+                          key={index}
+                          src={item.src}
+                          alt=""
+                          style={{ width: '100px', height: '100px' }}
+                        />
+                      ))}
+                      {cell.hsatz.map((item, index) => (
+                        <div key={index}>{item}</div>
+                      ))}
+                      {cell.psatz.map((item, index) => (
+                        <div key={index}>{item}</div>
+                      ))}
+                      {cell.euhsatz.map((item, index) => (
+                        <div key={index}>{item}</div>
+                      ))}
                     </div>
                   </td>
                 ))}
@@ -320,7 +306,7 @@ const handleAddColumn = () => {
           </tbody>
         </table>
       </div>
-      
+        
       <button onClick={handleTable}>Enter Table</button>
       <button onClick={closeModal}>Cancel</button>
     </Modal>
