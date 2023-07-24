@@ -8,6 +8,7 @@ import { ExperimentGroups } from './files/ExperimentGroup';
 import EditorModal from './files/EditorModal';
 import DeleteModal from './files/DeleteModal.js';
 import HPModal from './files/HPModal.js';
+import {HP} from './files/HP.js';
 
 export default function App() {
   const editorRef = useRef(null);
@@ -40,7 +41,6 @@ export default function App() {
 
   const openHPModal = () => setIsHPModalOpen(true);
   const closeHPModal = () => setIsHPModalOpen(false);
-
 
   // Define the custom plugin initialization within the setup function
   const setup = (editor) => {
@@ -136,6 +136,8 @@ export default function App() {
       <button onClick={openEditorModal}>Save to DB</button>
       <button onClick={openDeleteModal}>Delete from DB</button>
       <button onClick={openHPModal}>Create Mögliche Gefahren Table</button>
+      <button onClick={() => HP(editorRef)}>HP</button>
+
     </>
   );
 }

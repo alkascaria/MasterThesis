@@ -17,6 +17,106 @@ const HPModal = ({ isModalOpen, closeModal, editorRef }) => {
   const [selectedPSatz, setSelectedPSatz] = useState([]);
   const [selectedEuhSatz, setSelectedEuhSatz] = useState([]);
 
+  
+
+  const parseTableContents = (rows) => {
+    const newCellContents = [];
+    // Skip the first row as it contains the header
+    for(let rowIndex = 1; rowIndex < rows.length; rowIndex++) {
+        const row = rows[rowIndex];
+        console.log('row'+row.outerHTML);
+        const cells = Array.from(row.cells);
+        console.log('cells'+cells.innerText)
+        const rowData = [];
+        for(let cellIndex = 0; cellIndex < cells.length; cellIndex++) {
+          const cell = cells[cellIndex];
+          console.log('cell: ', cell);
+      
+          const images = Array.from(cell.querySelectorAll('img'));
+          const ghs = images.map(image => ({ src: image.src }));
+          
+          // Now we're using innerHTML instead of innerText
+          const htmlContent = cell.innerHTML;
+          console.log('htmlContent: ', htmlContent);
+      
+          // We're splitting by '<br>'
+          const lines = htmlContent.split('<br>').filter(line => line.trim() !== '');
+          console.log('lines: ', lines);
+      
+          const hsatz = [];
+          const psatz = [];
+          const euhsatz = [];
+          let chemical = '';
+      
+          lines.forEach(line => {
+              // Here we're creating a temporary div to convert HTML string into text
+              const tempDiv = document.createElement('div');
+              tempDiv.innerHTML = line;
+              const text = tempDiv.textContent || tempDiv.innerText || '';
+      
+              console.log('text: ', text);
+      
+              if (text.startsWith('H')) {
+                  hsatz.push(text);
+              } else if (text.startsWith('P')) {
+                  psatz.push(text);
+              } else if (text.startsWith('EUH')) {
+                  euhsatz.push(text);
+              } else if (text !== '') {
+                  chemical = text;
+              }
+          });
+      
+          const cellContent = {
+              chemical,
+              ghs,
+              hsatz,
+              psatz,
+              euhsatz
+          };
+      
+          console.log('cellContent: ', cellContent);
+      
+          rowData.push(cellContent);
+      }
+      
+        newCellContents.push(rowData);
+    }
+    setCellContents(newCellContents);
+};
+
+
+  useEffect(() => {
+    if(editorRef.current) {
+      const content = editorRef.current.getContent();
+  
+      const target = '<th style="font-size: xx-large;" colspan="2">M&ouml;gliche Gefahren</th>';
+      
+      if(content.includes(target)) {
+        // Find the start of the target section
+        const start = content.lastIndexOf('<table', content.indexOf(target));
+        // Find the end of the table
+        const end = content.indexOf('</table>', start);
+        // Extract the table
+        const table = content.substring(start, end + '</table>'.length);
+  
+        // Parse the HTML string into a Document object
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(table, 'text/html');
+
+  
+        // Get all the rows from the table
+        const rows = Array.from(doc.querySelectorAll('tr'));
+      
+
+        parseTableContents(rows);
+      }
+    }
+
+  },[editorRef.current]);
+  
+  
+
   const handleAddRow = () => {
     setCellContents([...cellContents, Array(cellContents[0].length).fill({ chemical: '', ghs: [], hsatz: [], psatz: [], euhsatz: [] })]);
   };
