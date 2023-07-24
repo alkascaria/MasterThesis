@@ -8,7 +8,6 @@ import { ExperimentGroups } from './files/ExperimentGroup';
 import EditorModal from './files/EditorModal';
 import DeleteModal from './files/DeleteModal.js';
 import HPModal from './files/HPModal.js';
-import {HP} from './files/HP.js';
 
 export default function App() {
   const editorRef = useRef(null);
@@ -25,6 +24,16 @@ export default function App() {
   const log = () => {
     if (editorRef.current) {
       console.log(editorRef.current.getContent());
+    }
+  };
+
+  // Create a state to hold the editor content
+  const [editorContent, setEditorContent] = useState('');
+
+  // Update the editor content state whenever the editor content changes
+  const handleEditorChange = () => {
+    if (editorRef.current) {
+      setEditorContent(editorRef.current.getContent());
     }
   };
 
@@ -76,6 +85,7 @@ export default function App() {
       <Editor
         tinymceScriptSrc={process.env.PUBLIC_URL + '/tinymce/tinymce.min.js'}
         onInit={(evt, editor) => editorRef.current = editor}
+        onEditorChange={handleEditorChange}
         initialValue='<p>This is the initial content of the editor.</p>'
         init={
           {
@@ -127,8 +137,8 @@ export default function App() {
       <HPModal
         isModalOpen = {isHPModalOpen}
         closeModal = {closeHPModal}
-        editorRef= {editorRef}
-
+        editorContent = {editorContent}
+        editorRef = {editorRef}
       />
 
       <button onClick={log}>Log editor content</button>
@@ -136,7 +146,6 @@ export default function App() {
       <button onClick={openEditorModal}>Save to DB</button>
       <button onClick={openDeleteModal}>Delete from DB</button>
       <button onClick={openHPModal}>Create Mögliche Gefahren Table</button>
-      <button onClick={() => HP(editorRef)}>HP</button>
 
     </>
   );
