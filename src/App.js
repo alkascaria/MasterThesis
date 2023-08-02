@@ -145,7 +145,7 @@ export default function App() {
       <button onClick={() => SaveFile(editorRef)}>Save File</button>
       <button onClick={openEditorModal}>Save to DB</button>
       <button onClick={openDeleteModal}>Delete from DB</button>
-      <button onClick={openHPModal}>Create Mögliche Gefahren Table</button>
+      <button onClick={openHPModal}>Mögliche Gefahren Table</button>
 
     </>
   );

@@ -18,6 +18,12 @@ const HPModal = ({ isModalOpen, closeModal, editorContent, editorRef }) => {
   const [selectedPSatz, setSelectedPSatz] = useState([]);
   const [selectedEuhSatz, setSelectedEuhSatz] = useState([]);
 
+  const [achtungGefahrState, setAchtungGefahrState] = useState(false);
+
+  const handleAchtungGefahrBlur = () => {
+    setAchtungGefahrState(true);
+  };
+
   const handleAddRow = () => {
     // Adding a row 
     setCellContents([...cellContents, new Array(cellContents[0].length).fill(null).map(() => ({ chemical: [], ghs: [], achtungGefahr: '', hsatz: [], psatz: [], euhsatz: [] }))]);
@@ -225,8 +231,13 @@ const HPModal = ({ isModalOpen, closeModal, editorContent, editorRef }) => {
       cellContent.ghs = selectedGhsOptions.map(option => ({ src: option.symbol }));
       setCellContents(newCellContents);
     }
+  
+    if (selectedGhsOptions.length > 0 && !selectedAchtungGefahr) {
+      // Set state to show error
+      setAchtungGefahrState(true);
+    }
   };
-
+  
   const achtungGefahrOptions = [
     { value: 'Achtung', label: 'Achtung' },
     { value: 'Gefahr', label: 'Gefahr' }
@@ -351,12 +362,12 @@ const HPModal = ({ isModalOpen, closeModal, editorContent, editorRef }) => {
   const generateImgHtml = (src) => `<img src="${src}" alt="" style="width: 80px; height: 80px;" />`;
 
   const generateCellHtml = (cell) => {
-    const chemical = cell.chemical.replace(/\n/g, '<br />');
+    const chemical = cell.chemical.join('<br/>');
     return `
       <td style="border: 2px solid black; border-bottom: border: 1px solid black; padding: 10px; font-size: large; width: 50%;">
-        <div>${chemical+'<br/>'}</div>
-        ${cell.ghs.map(item => generateImgHtml(item.src)).join('')+'<br/>'}
-        ${cell.achtungGefahr+'<br/>'} 
+        <div><strong>${chemical+'<br/>'}</strong></div>
+        <strong>${cell.ghs.map(item => generateImgHtml(item.src)).join('')+'<br/>'}</strong>
+        <strong>${cell.achtungGefahr+'<br/>'}</strong> 
         ${(cell.hsatz.join('<br />'))+'<br/>'}
         ${(cell.psatz.join('<br />'))+'<br/>'}
         ${(cell.euhsatz.join('<br />'))+'<br/>'}
@@ -450,8 +461,11 @@ const HPModal = ({ isModalOpen, closeModal, editorContent, editorRef }) => {
             options = {achtungGefahrOptions}
             value = {selectedAchtungGefahr}
             onChange = {handleAchtungGefahrChange}
+            onBlur = {handleAchtungGefahrBlur}
             placeholder = "Select Achtung oder Gefahr"
+            style={achtungGefahrState && !selectedAchtungGefahr ? { borderColor: 'red' } : null}
           />
+          {achtungGefahrState && !selectedAchtungGefahr && <div style={{ color: 'red' }}>This field is required</div>}
         </div>
       )}
 
