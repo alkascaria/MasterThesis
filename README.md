@@ -1,70 +1,81 @@
-# Getting Started with Create React App
+# LabBook Web Editor
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project is a customized implementation of the TinyMCE editor tailored to meet the specific needs of creating and documenting chemistry experiments, especially for LabBook.
 
-## Available Scripts
+## Table of Contents
 
-In the project directory, you can run:
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [License](#license)
+- [Contact](#contact)
 
-### `npm start`
+## Features
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **Automatic GHS Pictogram Insertion**: Easily insert GHS pictograms from a dedicated pictogram database.
+- **Automatic Possible Hazards Table Creation**: Easily create Possible Hazards Table by insering GHS H, P and EUH Statements.
+- **Exportable/Importable**: Save, delete and modify experiment documents.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Installation
 
-### `npm test`
+This requires both node.js (https://nodejs.org/en) and npm to be installed on the system.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Clone the repository to your local machine:
 
-### `npm run build`
+For Client
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+git clone https://github.com/alkascaria/tinymce-client.git
+cd tinymce-client
+```
+Install the necessary dependencies:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+npm install
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-### `npm run eject`
+For Server
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+This requires Express, CORS and MongoDB (https://www.mongodb.com/atlas/database) and its driver.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+git clone https://github.com/alkascaria/tinymce-server.git
+cd tinymce-server
+```
+Install the necessary dependencies:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```bash
+npm install
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Create the database collection:
 
-## Learn More
+```bash
+node db.js
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Usage
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Start the development server- Client:
 
-### Code Splitting
+```bash
+npm run start
+```
+Start the server:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```bash
+node server.mjs
+```
 
-### Analyzing the Bundle Size
+Open your web browser and navigate to http://localhost:3000 to start using the LabBook WebEditor.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## License
 
-### Making a Progressive Web App
+This project is licensed under the MIT License.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Contact
 
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Alka Scaria
+Project Link: Client - https://github.com/alkascaria/tinymce-client
+              Server - https://github.com/alkascaria/tinymce-server
